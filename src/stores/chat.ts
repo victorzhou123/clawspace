@@ -14,14 +14,16 @@ export const useChatStore = defineStore('chat', () => {
   const currentSessionId = ref<string | null>(null)
 
   async function loadHistory(sessionId: string) {
-    const result = await chatHistory(sessionId)
+    // 请求最新一页，pageSize=50 覆盖大多数会话
+    const result = await chatHistory(sessionId, { page: 1, pageSize: 50 })
     messages.value = result.list
     currentSessionId.value = sessionId
   }
 
   async function sendMessage(sessionId: string, content: string) {
+    const msgId = `local-${Date.now()}`
     const userMsg: Message = {
-      id: `local-${Date.now()}`,
+      id: msgId,
       role: 'user',
       content,
       timestamp: Date.now(),
@@ -31,9 +33,10 @@ export const useChatStore = defineStore('chat', () => {
     sending.value = true
     try {
       await chatSend(sessionId, content)
-      userMsg.status = 'sent'
+      // 通过索引替换，确保 Vue 3 响应式追踪
+      _updateMessage(msgId, { status: 'sent' })
     } catch (e) {
-      userMsg.status = 'error'
+      _updateMessage(msgId, { status: 'error' })
       logger.error(TAG, 'sendMessage failed', e)
       throw e
     } finally {
@@ -62,28 +65,40 @@ export const useChatStore = defineStore('chat', () => {
 
       if (d.done) {
         streaming.value = false
-        const msg = messages.value.find(m => m.id === d.messageId)
-        if (msg) { msg.isStreaming = false; msg.status = 'sent' }
+        _updateMessage(d.messageId!, { isStreaming: false, status: 'sent' })
         return
       }
 
       streaming.value = true
-      let msg = messages.value.find(m => m.id === d.messageId)
-      if (!msg) {
-        msg = {
+      const idx = messages.value.findIndex(m => m.id === d.messageId)
+      if (idx === -1) {
+        // 新的流式消息，追加到列表
+        messages.value.push({
           id: d.messageId!,
           role: 'assistant',
-          content: '',
+          content: d.content ?? '',
           timestamp: Date.now(),
           isStreaming: true,
+        })
+      } else {
+        // 通过索引替换，确保 Vue 3 响应式追踪
+        messages.value[idx] = {
+          ...messages.value[idx],
+          content: messages.value[idx].content + (d.content ?? ''),
         }
-        messages.value.push(msg)
       }
-      msg.content += d.content ?? ''
     }
 
     subscribe('chat.stream', onChunk)
     return () => unsubscribe('chat.stream', onChunk)
+  }
+
+  // 通过索引替换消息对象，保证 Vue 3 响应式更新
+  function _updateMessage(id: string, patch: Partial<Message>) {
+    const idx = messages.value.findIndex(m => m.id === id)
+    if (idx !== -1) {
+      messages.value[idx] = { ...messages.value[idx], ...patch }
+    }
   }
 
   return {

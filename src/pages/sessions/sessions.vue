@@ -36,16 +36,17 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useSessionStore } from '@/stores/session'
+import { useChatStore } from '@/stores/chat'
 
 const sessionStore = useSessionStore()
+const chatStore = useChatStore()
 const { sessions, loading } = storeToRefs(sessionStore)
 
 onLoad(() => { guardAuth() })
 
 onShow(async () => {
-  if (!sessionStore.sessions.length) {
-    await sessionStore.fetchSessions().catch(() => {})
-  }
+  // 每次进入都刷新，保证数据新鲜度
+  await sessionStore.fetchSessions().catch(() => {})
 })
 
 async function onRefresh() {
@@ -60,38 +61,50 @@ function openSession(sessionId: string) {
 function onLongPress(sessionId: string, title: string) {
   uni.showActionSheet({
     itemList: ['重命名', '重置会话', '删除会话'],
-    success: async ({ tapIndex }) => {
-      if (tapIndex === 0) {
-        uni.showModal({
-          title: '重命名',
-          editable: true,
-          placeholderText: title || '新会话',
-          success: async (res) => {
-            if (res.confirm && res.content?.trim()) {
-              await sessionStore.renameSession(sessionId, res.content.trim()).catch(() => {})
-            }
-          },
-        })
-      } else if (tapIndex === 1) {
-        uni.showModal({
-          title: '重置会话',
-          content: '将清空该会话的所有消息，确认重置？',
-          success: async (res) => {
-            if (res.confirm) {
-              await sessionStore.resetSession(sessionId).catch(() => {})
-            }
-          },
-        })
-      } else if (tapIndex === 2) {
-        uni.showModal({
-          title: '删除会话',
-          content: '删除后无法恢复，确认删除？',
-          success: async (res) => {
-            if (res.confirm) {
-              await sessionStore.deleteSession(sessionId).catch(() => {})
-            }
-          },
-        })
+    success: ({ tapIndex }) => {
+      if (tapIndex === 0) confirmRename(sessionId, title)
+      else if (tapIndex === 1) confirmReset(sessionId)
+      else if (tapIndex === 2) confirmDelete(sessionId)
+    },
+  })
+}
+
+function confirmRename(sessionId: string, currentTitle: string) {
+  uni.showModal({
+    title: '重命名',
+    editable: true,
+    placeholderText: currentTitle || '新会话',
+    success: async (res) => {
+      if (res.confirm && res.content?.trim()) {
+        await sessionStore.renameSession(sessionId, res.content.trim()).catch(() => {})
+      }
+    },
+  })
+}
+
+function confirmReset(sessionId: string) {
+  uni.showModal({
+    title: '重置会话',
+    content: '将清空该会话的所有消息，确认重置？',
+    success: async (res) => {
+      if (res.confirm) {
+        await sessionStore.resetSession(sessionId).catch(() => {})
+        // 若重置的是当前会话，同步清空聊天消息
+        if (sessionStore.currentSessionId === sessionId) {
+          chatStore.clearMessages()
+        }
+      }
+    },
+  })
+}
+
+function confirmDelete(sessionId: string) {
+  uni.showModal({
+    title: '删除会话',
+    content: '删除后无法恢复，确认删除？',
+    success: async (res) => {
+      if (res.confirm) {
+        await sessionStore.deleteSession(sessionId).catch(() => {})
       }
     },
   })

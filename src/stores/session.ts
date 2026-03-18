@@ -38,6 +38,11 @@ export const useSessionStore = defineStore('session', () => {
 
   async function resetSession(sessionId: string) {
     await sessionsReset(sessionId)
+    // 重置后清空本地会话条目的消息计数和预览
+    const idx = sessions.value.findIndex(s => s.id === sessionId)
+    if (idx !== -1) {
+      sessions.value[idx] = { ...sessions.value[idx], messageCount: 0, preview: '' }
+    }
   }
 
   function setCurrentSession(sessionId: string | null) {

@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
@@ -94,9 +94,10 @@ onShow(async () => {
 
   chatLoading.value = true
   chatStore.clearMessages()
-  unsubscribeFn?.()
   try {
     await chatStore.loadHistory(sessionId)
+    // 加载成功后才取消旧订阅、建立新订阅，避免加载失败时丢失订阅
+    unsubscribeFn?.()
     unsubscribeFn = chatStore.subscribeStream(sessionId)
     scrollToBottom()
   } catch {
@@ -117,8 +118,10 @@ watch(
 )
 
 function scrollToBottom() {
-  scrollAnchor.value = ''
-  setTimeout(() => { scrollAnchor.value = 'msg-bottom' }, 50)
+  nextTick(() => {
+    scrollAnchor.value = ''
+    nextTick(() => { scrollAnchor.value = 'msg-bottom' })
+  })
 }
 
 async function onSend() {
