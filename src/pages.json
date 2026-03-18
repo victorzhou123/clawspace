@@ -1,0 +1,76 @@
+{
+	"pages": [
+		{
+			"path": "pages/chat/chat",
+			"style": {
+				"navigationBarTitleText": "聊天",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/sessions/sessions",
+			"style": {
+				"navigationBarTitleText": "会话列表",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/agents/agents",
+			"style": {
+				"navigationBarTitleText": "Agent 管理",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/settings/settings",
+			"style": {
+				"navigationBarTitleText": "设置"
+			}
+		},
+		{
+			"path": "pages/auth/login",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationStyle": "custom"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "ClawSpace",
+		"navigationBarBackgroundColor": "#FFFFFF",
+		"backgroundColor": "#F5F5F5"
+	},
+	"tabBar": {
+		"color": "#7A7E83",
+		"selectedColor": "#3cc51f",
+		"borderStyle": "black",
+		"backgroundColor": "#ffffff",
+		"list": [
+			{
+				"pagePath": "pages/chat/chat",
+				"iconPath": "static/tabbar/chat.png",
+				"selectedIconPath": "static/tabbar/chat-active.png",
+				"text": "聊天"
+			},
+			{
+				"pagePath": "pages/sessions/sessions",
+				"iconPath": "static/tabbar/sessions.png",
+				"selectedIconPath": "static/tabbar/sessions-active.png",
+				"text": "会话"
+			},
+			{
+				"pagePath": "pages/agents/agents",
+				"iconPath": "static/tabbar/agents.png",
+				"selectedIconPath": "static/tabbar/agents-active.png",
+				"text": "Agent"
+			},
+			{
+				"pagePath": "pages/settings/settings",
+				"iconPath": "static/tabbar/settings.png",
+				"selectedIconPath": "static/tabbar/settings-active.png",
+				"text": "设置"
+			}
+		]
+	}
+}
