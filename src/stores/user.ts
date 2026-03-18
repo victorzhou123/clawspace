@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { storage } from '@/utils/storage'
 import { logger } from '@/utils/logger'
 import { eventBus, Events } from '@/utils/event-bus'
-import { connectGateway, disconnectGateway, rpc } from '@/api/websocket'
+import { connectGateway, disconnectGateway } from '@/api/websocket'
 import type { AuthConfig } from '@/types/websocket'
 
 const TAG = 'userStore'
@@ -20,14 +20,6 @@ export const useUserStore = defineStore('user', () => {
 
   async function loginWithToken(t: string): Promise<void> {
     await _connect({ type: 'token', token: t })
-    // 通过 RPC 验证 token 有效性
-    try {
-      await rpc('auth.login', { type: 'token', token: t })
-    } catch (e) {
-      disconnectGateway()
-      _clearAuth()
-      throw e
-    }
     token.value = t
     storage.set('auth_token', t)
     logger.info(TAG, 'logged in with token')
@@ -36,18 +28,6 @@ export const useUserStore = defineStore('user', () => {
 
   async function loginWithPassword(username: string, password: string): Promise<void> {
     await _connect({ type: 'password', username, password })
-    // 通过 RPC 验证密码
-    try {
-      const result = await rpc<{ token?: string }>('auth.login', { type: 'password', username, password })
-      if (result.token) {
-        token.value = result.token
-        storage.set('auth_token', result.token)
-      }
-    } catch (e) {
-      disconnectGateway()
-      _clearAuth()
-      throw e
-    }
     // 保存用户信息
     user.value = { username }
     storage.set('user', user.value)
@@ -57,14 +37,6 @@ export const useUserStore = defineStore('user', () => {
 
   async function loginWithDeviceToken(deviceToken: string): Promise<void> {
     await _connect({ type: 'device_token', deviceToken })
-    // 通过 RPC 验证 device token
-    try {
-      await rpc('auth.login', { type: 'device_token', deviceToken })
-    } catch (e) {
-      disconnectGateway()
-      _clearAuth()
-      throw e
-    }
     storage.set('auth_token', deviceToken)
     token.value = deviceToken
     logger.info(TAG, 'logged in with device token')

@@ -20,6 +20,7 @@ type EventHandler = (data: unknown) => void
 export class WebSocketManager {
   private ws: UniApp.SocketTask | null = null
   private url = ''
+  private auth: AuthConfig | null = null
   private requestId = 0
   private pending = new Map<number, PendingRequest>()
   private handlers = new Map<string, Set<EventHandler>>()
@@ -33,9 +34,9 @@ export class WebSocketManager {
     return this._status
   }
 
-  async connect(url: string, _auth: AuthConfig): Promise<void> {
-    // _auth 参数保留用于类型兼容，实际认证通过 RPC 调用完成
+  async connect(url: string, auth: AuthConfig): Promise<void> {
     this.url = url
+    this.auth = auth
     this.destroyed = false
     this._status = 'connecting'
     return this._connect()
@@ -56,7 +57,7 @@ export class WebSocketManager {
         this.reconnectAttempts = 0
         this.reconnecting = false
         this._startHeartbeat()
-        // 移除自动发送认证，改为通过 RPC 调用 auth.login 验证
+        this._sendHandshake()
         resolve()
       })
 
@@ -85,6 +86,34 @@ export class WebSocketManager {
         }
       })
     })
+  }
+
+  private _sendHandshake(): void {
+    if (!this.auth) return
+
+    const authPayload: Record<string, string> = {}
+    if (this.auth.type === 'token' && this.auth.token) {
+      authPayload.token = this.auth.token
+    } else if (this.auth.type === 'password' && this.auth.password) {
+      authPayload.password = this.auth.password
+    } else if (this.auth.type === 'device_token' && this.auth.deviceToken) {
+      authPayload.deviceToken = this.auth.deviceToken
+    }
+
+    const handshake = {
+      minProtocol: 1,
+      maxProtocol: 1,
+      client: {
+        id: 'clawspace-uniapp',
+        version: '1.0.0',
+        platform: 'uniapp',
+        mode: 'client'
+      },
+      auth: authPayload
+    }
+
+    logger.debug(TAG, 'sending handshake')
+    this._send(handshake)
   }
 
   call(method: string, params?: unknown): Promise<unknown> {
