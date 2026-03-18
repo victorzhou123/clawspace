@@ -57,8 +57,18 @@ export class WebSocketManager {
         this.reconnectAttempts = 0
         this.reconnecting = false
         this._startHeartbeat()
+
+        // 发送握手并等待响应
         this._sendHandshake()
-        resolve()
+          .then(() => {
+            logger.info(TAG, 'handshake successful')
+            resolve()
+          })
+          .catch((err) => {
+            logger.error(TAG, 'handshake failed', err)
+            this._status = 'error'
+            reject(err)
+          })
       })
 
       this.ws.onMessage((res) => {
@@ -88,8 +98,8 @@ export class WebSocketManager {
     })
   }
 
-  private _sendHandshake(): void {
-    if (!this.auth) return
+  private _sendHandshake(): Promise<void> {
+    if (!this.auth) return Promise.reject(new Error('No auth config'))
 
     const authPayload: Record<string, string> = {}
     if (this.auth.type === 'token' && this.auth.token) {
@@ -112,16 +122,12 @@ export class WebSocketManager {
       auth: authPayload
     }
 
-    // 握手消息必须是 RPC 请求格式
-    const handshakeRequest = {
-      type: 'req',
-      method: 'connect',
-      id: ++this.requestId,
-      params: connectParams
-    }
-
     logger.debug(TAG, 'sending handshake')
-    this._send(handshakeRequest)
+
+    // 使用 call() 方法发送握手请求，这样可以等待响应
+    return this.call('connect', connectParams).then(() => {
+      // 握手成功，不需要返回值
+    }) as Promise<void>
   }
 
   call(method: string, params?: unknown): Promise<unknown> {
