@@ -11,7 +11,7 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
   error: 3,
 }
 
-const currentLevel: LogLevel = isDev ? 'debug' : 'error'
+let currentLevel: LogLevel = isDev ? 'debug' : 'error'
 
 function shouldLog(level: LogLevel): boolean {
   return LEVEL_PRIORITY[level] >= LEVEL_PRIORITY[currentLevel]
@@ -35,4 +35,8 @@ export const logger = {
   error(tag: string, msg: string, ...args: unknown[]): void {
     if (shouldLog('error')) console.error(format('error', tag, msg), ...args)
   },
+}
+
+export function setLogLevel(level: LogLevel): void {
+  currentLevel = level
 }

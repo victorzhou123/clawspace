@@ -34,7 +34,8 @@ export const storage = {
 
   clear(): void {
     try {
-      uni.clearStorageSync()
+      const res = uni.getStorageInfoSync()
+      res.keys.filter(k => k.startsWith(PREFIX)).forEach(k => uni.removeStorageSync(k))
     } catch {
       // ignore
     }
