@@ -20,7 +20,6 @@ type EventHandler = (data: unknown) => void
 export class WebSocketManager {
   private ws: UniApp.SocketTask | null = null
   private url = ''
-  private auth: AuthConfig | null = null
   private requestId = 0
   private pending = new Map<number, PendingRequest>()
   private handlers = new Map<string, Set<EventHandler>>()
@@ -34,12 +33,11 @@ export class WebSocketManager {
     return this._status
   }
 
-  async connect(url: string, auth: AuthConfig): Promise<void> {
+  async connect(url: string, _auth: AuthConfig): Promise<void> {
+    // _auth 参数保留用于类型兼容，实际认证通过 RPC 调用完成
     this.url = url
-    this.auth = auth
     this.destroyed = false
     this._status = 'connecting'
-    // 只建立连接，不等待认证事件（认证通过 RPC 调用完成）
     return this._connect()
   }
 
@@ -58,7 +56,7 @@ export class WebSocketManager {
         this.reconnectAttempts = 0
         this.reconnecting = false
         this._startHeartbeat()
-        this._sendAuth()
+        // 移除自动发送认证，改为通过 RPC 调用 auth.login 验证
         resolve()
       })
 
@@ -87,18 +85,6 @@ export class WebSocketManager {
         }
       })
     })
-  }
-
-  private _sendAuth(): void {
-    if (!this.auth) return
-    const msg: Record<string, unknown> = { type: 'auth', authType: this.auth.type }
-    if (this.auth.type === 'token') msg.token = this.auth.token
-    if (this.auth.type === 'password') {
-      msg.username = this.auth.username
-      msg.password = this.auth.password
-    }
-    if (this.auth.type === 'device_token') msg.deviceToken = this.auth.deviceToken
-    this._send(msg)
   }
 
   call(method: string, params?: unknown): Promise<unknown> {
