@@ -39,35 +39,8 @@ export class WebSocketManager {
     this.auth = auth
     this.destroyed = false
     this._status = 'connecting'
-    await this._connect()
-    // 等待认证结果
-    return this._waitForAuth()
-  }
-
-  private _waitForAuth(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        reject(new Error('Authentication timeout'))
-      }, 10000)
-
-      const onAuthSuccess = () => {
-        clearTimeout(timer)
-        this.off('auth.success', onAuthSuccess)
-        this.off('auth.error', onAuthError)
-        resolve()
-      }
-
-      const onAuthError = (data: unknown) => {
-        clearTimeout(timer)
-        this.off('auth.success', onAuthSuccess)
-        this.off('auth.error', onAuthError)
-        const msg = (data as { message?: string })?.message || 'Authentication failed'
-        reject(new Error(msg))
-      }
-
-      this.on('auth.success', onAuthSuccess)
-      this.on('auth.error', onAuthError)
-    })
+    // 只建立连接，不等待认证事件（认证通过 RPC 调用完成）
+    return this._connect()
   }
 
   private _connect(): Promise<void> {
@@ -173,6 +146,9 @@ export class WebSocketManager {
   }
 
   private _handleMessage(data: RpcResponse & WsEvent): void {
+    // 调试：记录所有收到的消息
+    logger.debug(TAG, 'received message:', data)
+
     // RPC 响应
     if (data.id !== undefined && this.pending.has(data.id)) {
       const req = this.pending.get(data.id)!
@@ -188,6 +164,7 @@ export class WebSocketManager {
 
     // 服务器推送事件
     if (data.event) {
+      logger.debug(TAG, `event received: ${data.event}`, data.data)
       const handlers = this.handlers.get(data.event)
       if (handlers) handlers.forEach(h => h(data.data))
     }
