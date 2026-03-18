@@ -28,16 +28,17 @@ export class WebSocketManager {
   private reconnectAttempts = 0
   private reconnecting = false
   private destroyed = false
+  private _status: ConnectionStatus = 'disconnected'
 
   get status(): ConnectionStatus {
-    if (!this.ws) return 'disconnected'
-    return 'connected'
+    return this._status
   }
 
   async connect(url: string, auth: AuthConfig): Promise<void> {
     this.url = url
     this.auth = auth
     this.destroyed = false
+    this._status = 'connecting'
     return this._connect()
   }
 
@@ -52,6 +53,7 @@ export class WebSocketManager {
 
       this.ws.onOpen(() => {
         logger.info(TAG, 'connected')
+        this._status = 'connected'
         this.reconnectAttempts = 0
         this.reconnecting = false
         this._startHeartbeat()
@@ -70,15 +72,17 @@ export class WebSocketManager {
 
       this.ws.onClose(() => {
         logger.warn(TAG, 'connection closed')
+        this._status = 'disconnected'
         this._stopHeartbeat()
-        if (!this.destroyed) this._scheduleReconnect()
+        if (!this.destroyed && !this.reconnecting) this._scheduleReconnect()
       })
 
       this.ws.onError((err) => {
         logger.error(TAG, 'connection error', err)
+        this._status = 'error'
         if (!this.destroyed) {
           reject(new Error('WebSocket connection failed'))
-          this._scheduleReconnect()
+          // 由 onClose 统一触发重连，此处不重复调用
         }
       })
     })
@@ -97,6 +101,9 @@ export class WebSocketManager {
   }
 
   call(method: string, params?: unknown): Promise<unknown> {
+    if (this._status !== 'connected') {
+      return Promise.reject(new Error(`WebSocket not connected (status: ${this._status})`))
+    }
     const id = ++this.requestId
     const req: RpcRequest = { id, method, params }
 
@@ -122,6 +129,7 @@ export class WebSocketManager {
 
   disconnect(): void {
     this.destroyed = true
+    this._status = 'disconnected'
     this._stopHeartbeat()
     this.ws?.close({})
     this.ws = null
@@ -197,3 +205,5 @@ export class WebSocketManager {
 }
 
 export const wsManager = new WebSocketManager()
+// 注意：wsManager 是模块级单例，适用于连接单一 Gateway 的场景。
+// 若需连接多个 WebSocket 端点，请直接实例化 WebSocketManager。

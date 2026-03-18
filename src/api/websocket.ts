@@ -1,10 +1,18 @@
 // WebSocket API 层 - RPC 调用封装
 
 import { wsManager } from '@/utils/websocket-manager'
+import { logger } from '@/utils/logger'
 import type { AuthConfig } from '@/types/websocket'
 
+const TAG = 'WsAPI'
+
 export async function connectGateway(auth: AuthConfig): Promise<void> {
-  const url = import.meta.env.VITE_GATEWAY_WS_URL as string || 'ws://localhost:3000'
+  const url = import.meta.env.VITE_GATEWAY_WS_URL as string
+  if (!url) {
+    const err = 'VITE_GATEWAY_WS_URL is not set'
+    logger.error(TAG, err)
+    throw new Error(err)
+  }
   await wsManager.connect(url, auth)
 }
 

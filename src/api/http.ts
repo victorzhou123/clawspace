@@ -7,7 +7,7 @@ const TAG = 'HTTP'
 const TIMEOUT = 15000
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   data?: Record<string, unknown>
   headers?: Record<string, string>
   skipAuth?: boolean
@@ -20,7 +20,9 @@ interface HttpResponse<T = unknown> {
 }
 
 function getBaseUrl(): string {
-  return import.meta.env.VITE_GATEWAY_HTTP_URL as string || ''
+  const url = import.meta.env.VITE_GATEWAY_HTTP_URL as string || ''
+  if (!url && import.meta.env.DEV) logger.warn(TAG, 'VITE_GATEWAY_HTTP_URL is not set')
+  return url
 }
 
 function getAuthHeader(): Record<string, string> {
@@ -65,5 +67,11 @@ export const http = {
   },
   post<T>(path: string, data?: Record<string, unknown>, options?: Omit<RequestOptions, 'method' | 'data'>): Promise<T> {
     return request<T>(path, { ...options, method: 'POST', data })
+  },
+  put<T>(path: string, data?: Record<string, unknown>, options?: Omit<RequestOptions, 'method' | 'data'>): Promise<T> {
+    return request<T>(path, { ...options, method: 'PUT', data })
+  },
+  delete<T>(path: string, options?: Omit<RequestOptions, 'method' | 'data'>): Promise<T> {
+    return request<T>(path, { ...options, method: 'DELETE' })
   },
 }
