@@ -39,7 +39,35 @@ export class WebSocketManager {
     this.auth = auth
     this.destroyed = false
     this._status = 'connecting'
-    return this._connect()
+    await this._connect()
+    // 等待认证结果
+    return this._waitForAuth()
+  }
+
+  private _waitForAuth(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error('Authentication timeout'))
+      }, 10000)
+
+      const onAuthSuccess = () => {
+        clearTimeout(timer)
+        this.off('auth.success', onAuthSuccess)
+        this.off('auth.error', onAuthError)
+        resolve()
+      }
+
+      const onAuthError = (data: unknown) => {
+        clearTimeout(timer)
+        this.off('auth.success', onAuthSuccess)
+        this.off('auth.error', onAuthError)
+        const msg = (data as { message?: string })?.message || 'Authentication failed'
+        reject(new Error(msg))
+      }
+
+      this.on('auth.success', onAuthSuccess)
+      this.on('auth.error', onAuthError)
+    })
   }
 
   private _connect(): Promise<void> {
