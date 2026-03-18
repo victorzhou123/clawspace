@@ -23,7 +23,7 @@
           v-model="tokenForm.token"
           class="input"
           placeholder="请输入 API Token"
-          :password="false"
+          :maxlength="512"
         />
         <button class="btn-primary" :disabled="loading" @tap="handleTokenLogin">
           {{ loading ? '连接中...' : '连接' }}
@@ -32,8 +32,8 @@
 
       <!-- 密码登录 -->
       <view v-if="activeTab === 'password'" class="form">
-        <input v-model="passwordForm.username" class="input" placeholder="用户名" />
-        <input v-model="passwordForm.password" class="input" placeholder="密码" password />
+        <input v-model="passwordForm.username" class="input" placeholder="用户名" :maxlength="128" />
+        <input v-model="passwordForm.password" class="input" placeholder="密码" password :maxlength="128" />
         <button class="btn-primary" :disabled="loading" @tap="handlePasswordLogin">
           {{ loading ? '登录中...' : '登录' }}
         </button>
@@ -45,6 +45,7 @@
           v-model="deviceForm.deviceToken"
           class="input"
           placeholder="请输入 Device Token"
+          :maxlength="512"
         />
         <button class="btn-primary" :disabled="loading" @tap="handleDeviceLogin">
           {{ loading ? '连接中...' : '连接' }}
@@ -58,6 +59,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
@@ -65,6 +67,13 @@ const userStore = useUserStore()
 const loading = ref(false)
 const errorMsg = ref('')
 const activeTab = ref<'token' | 'password' | 'device'>('token')
+let redirectUrl = ''
+
+onLoad((options) => {
+  if (options?.redirect) {
+    redirectUrl = decodeURIComponent(options.redirect as string)
+  }
+})
 
 const tabs = [
   { key: 'token' as const, label: 'Token' },
@@ -78,27 +87,36 @@ const deviceForm = reactive({ deviceToken: '' })
 
 async function handleTokenLogin() {
   if (!tokenForm.token.trim()) return
-  await _login(() => userStore.loginWithToken(tokenForm.token.trim()))
+  await doLogin(() => userStore.loginWithToken(tokenForm.token.trim()))
 }
 
 async function handlePasswordLogin() {
   if (!passwordForm.username.trim() || !passwordForm.password) return
-  await _login(() => userStore.loginWithPassword(passwordForm.username.trim(), passwordForm.password))
+  await doLogin(() => userStore.loginWithPassword(passwordForm.username.trim(), passwordForm.password))
 }
 
 async function handleDeviceLogin() {
   if (!deviceForm.deviceToken.trim()) return
-  await _login(() => userStore.loginWithDeviceToken(deviceForm.deviceToken.trim()))
+  await doLogin(() => userStore.loginWithDeviceToken(deviceForm.deviceToken.trim()))
 }
 
-async function _login(fn: () => Promise<void>) {
+async function doLogin(fn: () => Promise<void>) {
   loading.value = true
   errorMsg.value = ''
   try {
     await fn()
-    uni.switchTab({ url: '/pages/chat/chat' })
+    if (redirectUrl) {
+      uni.navigateTo({ url: redirectUrl })
+    } else {
+      uni.switchTab({ url: '/pages/chat/chat' })
+    }
   } catch (e) {
-    errorMsg.value = (e as Error).message || '连接失败，请检查配置'
+    const msg = (e as Error).message ?? ''
+    errorMsg.value = msg.includes('401') || msg.includes('unauthorized')
+      ? '认证失败，请检查凭据'
+      : msg.includes('timeout') || msg.includes('connect')
+        ? '连接超时，请检查网络'
+        : '连接失败，请检查配置'
   } finally {
     loading.value = false
   }
