@@ -10,9 +10,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import { guardAuth } from '@/utils/guard'
 
-const sessions = ref([])
+onLoad(() => { guardAuth() })
 </script>
 
 <style scoped lang="scss">
