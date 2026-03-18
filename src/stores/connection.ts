@@ -8,9 +8,8 @@ import type { ConnectionStatus } from '@/types/websocket'
 
 export const useConnectionStore = defineStore('connection', () => {
   const status = ref<ConnectionStatus>('disconnected')
-  const reconnectAttempts = ref(0)
 
-  // 监听事件总线同步状态
+  // Pinia setup store 在同一 app 实例中只初始化一次，监听器不会重复注册
   eventBus.on(Events.WS_CONNECTED, () => { status.value = 'connected' })
   eventBus.on(Events.WS_DISCONNECTED, () => { status.value = 'disconnected' })
 
@@ -18,5 +17,5 @@ export const useConnectionStore = defineStore('connection', () => {
     status.value = wsManager.status
   }
 
-  return { status, reconnectAttempts, syncStatus }
+  return { status, syncStatus }
 })

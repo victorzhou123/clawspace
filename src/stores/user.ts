@@ -1,11 +1,9 @@
-// userStore - 用户信息与认证状态
-
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { storage } from '@/utils/storage'
 import { logger } from '@/utils/logger'
 import { eventBus, Events } from '@/utils/event-bus'
-import { connectGateway, disconnectGateway } from '@/api/websocket'
+import { connectGateway, disconnectGateway, subscribe } from '@/api/websocket'
 import type { AuthConfig } from '@/types/websocket'
 
 const TAG = 'userStore'
@@ -24,7 +22,15 @@ export const useUserStore = defineStore('user', () => {
 
   async function loginWithPassword(username: string, password: string): Promise<void> {
     await _connect({ type: 'password', username, password })
-    // password 认证后服务端会通过 WS 事件下发 token，此处仅建立连接
+    // 服务端通过 WS 事件 connect.challenge 下发 token，监听后持久化
+    subscribe('connect.challenge', (data) => {
+      const t = (data as { token?: string })?.token
+      if (t) {
+        token.value = t
+        storage.set('auth_token', t)
+        logger.info(TAG, 'token received from server')
+      }
+    })
     logger.info(TAG, 'logged in with password')
     eventBus.emit(Events.AUTH_LOGIN)
   }
@@ -45,17 +51,22 @@ export const useUserStore = defineStore('user', () => {
       return true
     } catch (e) {
       logger.warn(TAG, 'auto login failed', e)
-      logout()
+      _clearAuth()
       return false
     }
   }
 
   function logout(): void {
     disconnectGateway()
-    token.value = null
-    storage.remove('auth_token')
+    _clearAuth()
     logger.info(TAG, 'logged out')
     eventBus.emit(Events.AUTH_LOGOUT)
+  }
+
+  // 仅清理本地状态，不触发事件（用于静默场景如 autoLogin 失败）
+  function _clearAuth(): void {
+    token.value = null
+    storage.remove('auth_token')
   }
 
   async function _connect(auth: AuthConfig): Promise<void> {

@@ -4,7 +4,7 @@ import { useUserStore } from "@/stores/user";
 
 onLaunch(async () => {
   const userStore = useUserStore();
-  await userStore.autoLogin();
+  await userStore.autoLogin().catch(() => {});
 });
 onShow(() => {});
 onHide(() => {});

@@ -27,6 +27,7 @@ export function loginByToken(params: LoginByTokenParams): Promise<AuthResult> {
 }
 
 // 密码认证
+// @security 密码通过 WebSocket 明文传输，需确保连接使用 WSS（生产环境必须）
 export function loginByPassword(params: LoginByPasswordParams): Promise<AuthResult> {
   return rpc<AuthResult>('auth.login', { type: 'password', ...params })
 }
