@@ -100,7 +100,7 @@ export class WebSocketManager {
       authPayload.deviceToken = this.auth.deviceToken
     }
 
-    const handshake = {
+    const connectParams = {
       minProtocol: 1,
       maxProtocol: 1,
       client: {
@@ -112,8 +112,16 @@ export class WebSocketManager {
       auth: authPayload
     }
 
+    // 握手消息必须是 RPC 请求格式
+    const handshakeRequest = {
+      type: 'req',
+      method: 'connect',
+      id: ++this.requestId,
+      params: connectParams
+    }
+
     logger.debug(TAG, 'sending handshake')
-    this._send(handshake)
+    this._send(handshakeRequest)
   }
 
   call(method: string, params?: unknown): Promise<unknown> {
