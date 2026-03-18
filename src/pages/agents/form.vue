@@ -1,5 +1,9 @@
 <template>
   <view class="form-page">
+    <view v-if="loading" class="loading-mask">
+      <text class="loading-text">加载中...</text>
+    </view>
+
     <scroll-view scroll-y class="form-scroll">
       <view class="form-body">
         <view class="field">
@@ -63,6 +67,7 @@ import { useAgentStore } from '@/stores/agent'
 
 const agentStore = useAgentStore()
 const saving = ref(false)
+const loading = ref(false)
 const agentId = ref<string | null>(null)
 
 const form = reactive({
@@ -72,19 +77,25 @@ const form = reactive({
   systemPrompt: '',
 })
 
-onLoad((options) => {
+onLoad(async (options) => {
   if (!guardAuth()) return
   if (options?.agentId) {
     agentId.value = options.agentId as string
-    // 从 store 中读取当前 agent 填充表单
-    const agent = agentStore.currentAgent
-    if (agent && agent.id === agentId.value) {
+    uni.setNavigationBarTitle({ title: '编辑 Agent' })
+    // 从 API 实时获取数据，避免 store 缓存丢失
+    loading.value = true
+    try {
+      const agent = await agentStore.getAgent(agentId.value)
       form.name = agent.name
       form.description = agent.description ?? ''
       form.model = agent.model ?? ''
       form.systemPrompt = agent.systemPrompt ?? ''
+    } catch {
+      uni.showToast({ title: '加载失败', icon: 'none' })
+      setTimeout(() => uni.navigateBack(), 1500)
+    } finally {
+      loading.value = false
     }
-    uni.setNavigationBarTitle({ title: '编辑 Agent' })
   } else {
     uni.setNavigationBarTitle({ title: '新建 Agent' })
   }
@@ -92,7 +103,14 @@ onLoad((options) => {
 
 async function onSave() {
   const name = form.name.trim()
-  if (!name) return
+  if (!name) {
+    uni.showToast({ title: '请输入名称', icon: 'none' })
+    return
+  }
+  if (name.length < 2) {
+    uni.showToast({ title: '名称至少 2 个字符', icon: 'none' })
+    return
+  }
 
   saving.value = true
   try {
@@ -124,6 +142,25 @@ async function onSave() {
   display: flex;
   flex-direction: column;
   background: #f5f5f5;
+  position: relative;
+}
+
+.loading-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+
+  .loading-text {
+    font-size: 28rpx;
+    color: #999;
+  }
 }
 
 .form-scroll {

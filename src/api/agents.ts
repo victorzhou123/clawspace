@@ -1,7 +1,7 @@
 // Agent 管理 API
 
 import { rpc } from './websocket'
-import type { Agent, AgentIdentity } from '@/types/agent'
+import type { Agent } from '@/types/agent'
 import type { PaginationParams, PaginationResult } from '@/types/common'
 
 export interface AgentInput {
@@ -28,10 +28,6 @@ export function agentsDelete(agentId: string): Promise<void> {
   return rpc('agents.delete', { agentId })
 }
 
-export function agentExecute(agentId: string, params?: Record<string, unknown>): Promise<unknown> {
-  return rpc('agent', { agentId, ...params })
-}
-
-export function agentIdentityGet(agentId: string): Promise<AgentIdentity> {
-  return rpc('agent.identity.get', { agentId })
+export function agentsGet(agentId: string): Promise<Agent> {
+  return rpc('agents.get', { agentId })
 }
