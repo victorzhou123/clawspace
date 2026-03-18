@@ -86,18 +86,47 @@ const passwordForm = reactive({ username: '', password: '' })
 const deviceForm = reactive({ deviceToken: '' })
 
 async function handleTokenLogin() {
-  if (!tokenForm.token.trim()) return
-  await doLogin(() => userStore.loginWithToken(tokenForm.token.trim()))
+  const token = tokenForm.token.trim()
+  if (!token) {
+    uni.showToast({ title: '请输入 Token', icon: 'none' })
+    return
+  }
+  if (token.length < 16) {
+    uni.showToast({ title: 'Token 格式无效（至少 16 字符）', icon: 'none' })
+    return
+  }
+  await doLogin(() => userStore.loginWithToken(token))
 }
 
 async function handlePasswordLogin() {
-  if (!passwordForm.username.trim() || !passwordForm.password) return
-  await doLogin(() => userStore.loginWithPassword(passwordForm.username.trim(), passwordForm.password))
+  const username = passwordForm.username.trim()
+  const password = passwordForm.password
+  if (!username) {
+    uni.showToast({ title: '请输入用户名', icon: 'none' })
+    return
+  }
+  if (!password) {
+    uni.showToast({ title: '请输入密码', icon: 'none' })
+    return
+  }
+  if (password.length < 6) {
+    uni.showToast({ title: '密码至少 6 位', icon: 'none' })
+    return
+  }
+  await doLogin(() => userStore.loginWithPassword(username, password))
 }
 
 async function handleDeviceLogin() {
-  if (!deviceForm.deviceToken.trim()) return
-  await doLogin(() => userStore.loginWithDeviceToken(deviceForm.deviceToken.trim()))
+  const deviceToken = deviceForm.deviceToken.trim()
+  if (!deviceToken) {
+    uni.showToast({ title: '请输入 Device Token', icon: 'none' })
+    return
+  }
+  if (deviceToken.length < 16) {
+    uni.showToast({ title: 'Device Token 格式无效（至少 16 字符）', icon: 'none' })
+    return
+  }
+  await doLogin(() => userStore.loginWithDeviceToken(deviceToken))
 }
 
 async function doLogin(fn: () => Promise<void>) {
