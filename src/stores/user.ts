@@ -8,8 +8,14 @@ import type { AuthConfig } from '@/types/websocket'
 
 const TAG = 'userStore'
 
+interface User {
+  id?: string
+  username?: string
+}
+
 export const useUserStore = defineStore('user', () => {
   const token = ref<string | null>(storage.get<string>('auth_token'))
+  const user = ref<User | null>(storage.get<User>('user'))
   const isAuthenticated = computed(() => !!token.value)
 
   async function loginWithToken(t: string): Promise<void> {
@@ -31,6 +37,9 @@ export const useUserStore = defineStore('user', () => {
         logger.info(TAG, 'token received from server')
       }
     })
+    // 保存用户信息
+    user.value = { username }
+    storage.set('user', user.value)
     logger.info(TAG, 'logged in with password')
     eventBus.emit(Events.AUTH_LOGIN)
   }
@@ -66,7 +75,9 @@ export const useUserStore = defineStore('user', () => {
   // 仅清理本地状态，不触发事件（用于静默场景如 autoLogin 失败）
   function _clearAuth(): void {
     token.value = null
+    user.value = null
     storage.remove('auth_token')
+    storage.remove('user')
   }
 
   async function _connect(auth: AuthConfig): Promise<void> {
@@ -76,6 +87,7 @@ export const useUserStore = defineStore('user', () => {
 
   return {
     token,
+    user,
     isAuthenticated,
     loginWithToken,
     loginWithPassword,
