@@ -28,6 +28,13 @@
 			}
 		},
 		{
+			"path": "pages/agents/form",
+			"style": {
+				"navigationBarTitleText": "Agent",
+				"navigationBarBackButtonText": "返回"
+			}
+		},
+		{
 			"path": "pages/auth/login",
 			"style": {
 				"navigationBarTitleText": "登录",
