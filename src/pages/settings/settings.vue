@@ -19,6 +19,10 @@
           <text class="item-label">清除缓存</text>
           <text class="item-value">{{ cacheSize }}</text>
         </view>
+        <view class="item" @tap="goTools">
+          <text class="item-label">工具目录</text>
+          <text class="arrow">›</text>
+        </view>
       </view>
 
       <view class="section">
@@ -47,15 +51,22 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useUserStore } from '@/stores/user'
-import { storage } from '@/utils/storage'
 
 const userStore = useUserStore()
-const { user } = storeToRefs(userStore)
+const { instanceUrl } = storeToRefs(userStore)
 
-const version = ref('1.0.0')
+const version = ref((() => {
+  try { return uni.getSystemInfoSync().appVersion || '1.0.0' } catch { return '1.0.0' }
+})())
 const cacheSize = ref('0 KB')
 
-const userName = computed(() => user.value?.username || user.value?.id || '未知用户')
+const userName = computed(() => {
+  if (instanceUrl.value) {
+    try { return new URL(instanceUrl.value).hostname } catch { /* ignore */ }
+    return instanceUrl.value
+  }
+  return '未知实例'
+})
 const userInitial = computed(() => userName.value.charAt(0).toUpperCase())
 
 onLoad(() => { guardAuth() })
@@ -65,13 +76,15 @@ onShow(() => {
 })
 
 function calculateCacheSize() {
-  // 简单估算：统计 storage 中所有 key 的数据大小
   try {
-    const keys = ['token', 'user', 'sessions', 'agents', 'chat']
+    const info = uni.getStorageInfoSync()
+    const keys = info.keys ?? []
     let totalSize = 0
     keys.forEach(key => {
-      const data = storage.get(key)
-      if (data) totalSize += JSON.stringify(data).length
+      try {
+        const data = uni.getStorageSync(key)
+        if (data) totalSize += JSON.stringify(data).length
+      } catch { /* ignore */ }
     })
     if (totalSize < 1024) {
       cacheSize.value = `${totalSize} B`
@@ -99,6 +112,10 @@ function clearCache() {
       }
     },
   })
+}
+
+function goTools() {
+  uni.navigateTo({ url: '/pages/tools/tools' })
 }
 
 function checkUpdate() {
