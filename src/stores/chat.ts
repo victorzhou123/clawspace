@@ -7,20 +7,58 @@ import { logger } from '@/utils/logger'
 
 const TAG = 'chatStore'
 
+// 从后端消息对象提取文本内容
+function extractMessageText(msg: Record<string, unknown>): string {
+  if (typeof msg.text === 'string') return msg.text
+  if (typeof msg.content === 'string') return msg.content
+  if (Array.isArray(msg.content)) {
+    return msg.content
+      .filter((b: unknown) => b && typeof b === 'object' && (b as Record<string, unknown>).type === 'text')
+      .map((b: unknown) => (b as Record<string, unknown>).text as string)
+      .join('\n')
+  }
+  return ''
+}
+
 export const useChatStore = defineStore('chat', () => {
   const messages = ref<Message[]>([])
   const sending = ref(false)
   const streaming = ref(false)
   const currentSessionId = ref<string | null>(null)
+  const historyLimit = ref(50)
+  const hasMore = ref(false)
 
-  async function loadHistory(sessionId: string) {
-    // 请求最新一页，pageSize=50 覆盖大多数会话
-    const result = await chatHistory(sessionId, { page: 1, pageSize: 50 })
-    messages.value = result.list
-    currentSessionId.value = sessionId
+  async function loadHistory(sessionKey: string) {
+    historyLimit.value = 50
+    const result = await chatHistory(sessionKey, historyLimit.value) as { messages?: unknown[] }
+    const rawMessages = result.messages ?? []
+    messages.value = _parseMessages(rawMessages)
+    hasMore.value = rawMessages.length >= historyLimit.value
+    currentSessionId.value = sessionKey
   }
 
-  async function sendMessage(sessionId: string, content: string) {
+  async function loadMore(sessionKey: string) {
+    historyLimit.value += 50
+    const result = await chatHistory(sessionKey, historyLimit.value) as { messages?: unknown[] }
+    const rawMessages = result.messages ?? []
+    messages.value = _parseMessages(rawMessages)
+    hasMore.value = rawMessages.length >= historyLimit.value
+  }
+
+  function _parseMessages(rawMessages: unknown[]): Message[] {
+    return rawMessages
+      .filter((m): m is Record<string, unknown> => !!m && typeof m === 'object')
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map((m, i) => ({
+        id: (m.id as string | undefined) ?? `hist-${i}`,
+        role: m.role as 'user' | 'assistant',
+        content: extractMessageText(m),
+        timestamp: typeof m.timestamp === 'number' ? m.timestamp : Date.now(),
+        status: 'sent' as const,
+      }))
+  }
+
+  async function sendMessage(sessionKey: string, content: string) {
     const msgId = `local-${Date.now()}`
     const userMsg: Message = {
       id: msgId,
@@ -32,8 +70,7 @@ export const useChatStore = defineStore('chat', () => {
     messages.value.push(userMsg)
     sending.value = true
     try {
-      await chatSend(sessionId, content)
-      // 通过索引替换，确保 Vue 3 响应式追踪
+      await chatSend(sessionKey, content)
       _updateMessage(msgId, { status: 'sent' })
     } catch (e) {
       _updateMessage(msgId, { status: 'error' })
@@ -44,8 +81,8 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  async function abortMessage(sessionId: string) {
-    await chatAbort(sessionId)
+  async function abortMessage(sessionKey: string) {
+    await chatAbort(sessionKey)
     streaming.value = false
   }
 
@@ -56,44 +93,45 @@ export const useChatStore = defineStore('chat', () => {
 
   /**
    * 订阅流式消息推送，返回取消订阅函数
-   * 服务端推送事件：chat.stream { sessionId, messageId, content, done }
+   * 后端推送事件：agent { sessionKey, type, ... }
    */
-  function subscribeStream(sessionId: string): () => void {
-    const onChunk = (data: unknown) => {
-      const d = data as { sessionId?: string; messageId?: string; content?: string; done?: boolean }
-      if (d.sessionId !== sessionId) return
+  function subscribeStream(sessionKey: string): () => void {
+    const onAgentEvent = (data: unknown) => {
+      const d = data as Record<string, unknown>
+      if (d.sessionKey !== sessionKey) return
 
-      if (d.done) {
-        streaming.value = false
-        _updateMessage(d.messageId!, { isStreaming: false, status: 'sent' })
-        return
-      }
+      const type = d.type as string | undefined
 
-      streaming.value = true
-      const idx = messages.value.findIndex(m => m.id === d.messageId)
-      if (idx === -1) {
-        // 新的流式消息，追加到列表
-        messages.value.push({
-          id: d.messageId!,
-          role: 'assistant',
-          content: d.content ?? '',
-          timestamp: Date.now(),
-          isStreaming: true,
-        })
-      } else {
-        // 通过索引替换，确保 Vue 3 响应式追踪
-        messages.value[idx] = {
-          ...messages.value[idx],
-          content: messages.value[idx].content + (d.content ?? ''),
+      if (type === 'text' || type === 'content_delta') {
+        streaming.value = true
+        const msgId = (d.runId as string | undefined) ?? 'stream-current'
+        const delta = (d.text ?? d.delta ?? '') as string
+        const idx = messages.value.findIndex(m => m.id === msgId)
+        if (idx === -1) {
+          messages.value.push({
+            id: msgId,
+            role: 'assistant',
+            content: delta,
+            timestamp: Date.now(),
+            isStreaming: true,
+          })
+        } else {
+          messages.value[idx] = {
+            ...messages.value[idx],
+            content: messages.value[idx].content + delta,
+          }
         }
+      } else if (type === 'done' || type === 'stop') {
+        streaming.value = false
+        const msgId = (d.runId as string | undefined) ?? 'stream-current'
+        _updateMessage(msgId, { isStreaming: false, status: 'sent' })
       }
     }
 
-    subscribe('chat.stream', onChunk)
-    return () => unsubscribe('chat.stream', onChunk)
+    subscribe('agent', onAgentEvent)
+    return () => unsubscribe('agent', onAgentEvent)
   }
 
-  // 通过索引替换消息对象，保证 Vue 3 响应式更新
   function _updateMessage(id: string, patch: Partial<Message>) {
     const idx = messages.value.findIndex(m => m.id === id)
     if (idx !== -1) {
@@ -105,8 +143,10 @@ export const useChatStore = defineStore('chat', () => {
     messages,
     sending,
     streaming,
+    hasMore,
     currentSessionId,
     loadHistory,
+    loadMore,
     sendMessage,
     abortMessage,
     clearMessages,

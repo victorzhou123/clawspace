@@ -12,8 +12,17 @@
         scroll-y
         :scroll-into-view="scrollAnchor"
         scroll-with-animation
+        @scrolltoupper="onLoadMore"
       >
         <view class="message-list-inner">
+          <!-- 加载更多 -->
+          <view v-if="loadingMore" class="load-more-tip">
+            <text>加载中...</text>
+          </view>
+          <view v-else-if="hasMore" class="load-more-tip">
+            <text>下拉加载更多</text>
+          </view>
+
           <view v-if="messages.length === 0 && !chatLoading" class="empty-chat">
             <text class="empty-chat-text">发送消息开始对话</text>
           </view>
@@ -25,17 +34,15 @@
             class="bubble-row"
             :class="msg.role === 'user' ? 'row-user' : 'row-assistant'"
           >
-            <view
-              class="bubble"
-              :class="msg.role === 'user' ? 'bubble-user' : 'bubble-assistant'"
-            >
-              <text class="bubble-text" :selectable="true">{{ msg.content }}</text>
-              <text v-if="msg.isStreaming" class="cursor">▋</text>
-              <text v-if="msg.status === 'error'" class="error-tag">发送失败</text>
-            </view>
+            <MsgBubble
+              :role="msg.role"
+              :content="msg.content"
+              :is-streaming="msg.isStreaming"
+              :is-error="msg.status === 'error'"
+            />
           </view>
 
-          <!-- 底部锚点，用于滚动到底部 -->
+          <!-- 底部锚点 -->
           <view id="msg-bottom" style="height: 1px;" />
         </view>
       </scroll-view>
@@ -74,15 +81,17 @@ import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
+import MsgBubble from '@/components/MsgBubble.vue'
 
 const sessionStore = useSessionStore()
 const chatStore = useChatStore()
 const { currentSessionId } = storeToRefs(sessionStore)
-const { messages, sending, streaming } = storeToRefs(chatStore)
+const { messages, sending, streaming, hasMore } = storeToRefs(chatStore)
 
 const inputText = ref('')
 const scrollAnchor = ref('msg-bottom')
 const chatLoading = ref(false)
+const loadingMore = ref(false)
 let unsubscribeFn: (() => void) | null = null
 
 onLoad(() => { guardAuth() })
@@ -96,7 +105,6 @@ onShow(async () => {
   chatStore.clearMessages()
   try {
     await chatStore.loadHistory(sessionId)
-    // 加载成功后才取消旧订阅、建立新订阅，避免加载失败时丢失订阅
     unsubscribeFn?.()
     unsubscribeFn = chatStore.subscribeStream(sessionId)
     scrollToBottom()
@@ -117,11 +125,33 @@ watch(
   () => scrollToBottom(),
 )
 
+// 流式更新时滚动跟随
+watch(
+  () => {
+    const last = messages.value[messages.value.length - 1]
+    return last?.isStreaming ? last.content : null
+  },
+  (val) => { if (val !== null) scrollToBottom() },
+)
+
 function scrollToBottom() {
   nextTick(() => {
     scrollAnchor.value = ''
     nextTick(() => { scrollAnchor.value = 'msg-bottom' })
   })
+}
+
+async function onLoadMore() {
+  const sessionId = sessionStore.currentSessionId
+  if (!sessionId || loadingMore.value || !hasMore.value) return
+  loadingMore.value = true
+  try {
+    await chatStore.loadMore(sessionId)
+  } catch {
+    uni.showToast({ title: '加载失败', icon: 'none' })
+  } finally {
+    loadingMore.value = false
+  }
 }
 
 async function onSend() {
@@ -182,80 +212,38 @@ async function onAbort() {
 
   .empty-chat-text {
     font-size: 28rpx;
-    color: #ccc;
+    color: #bbb;
   }
+}
+
+.load-more-tip {
+  text-align: center;
+  padding: 20rpx 0;
+  font-size: 24rpx;
+  color: #bbb;
 }
 
 .bubble-row {
   display: flex;
   margin-bottom: 24rpx;
-
-  &.row-user {
-    justify-content: flex-end;
-  }
-
-  &.row-assistant {
-    justify-content: flex-start;
-  }
 }
 
-.bubble {
-  max-width: 72%;
-  padding: 20rpx 24rpx;
-  border-radius: 20rpx;
-  position: relative;
-
-  &.bubble-user {
-    background: #007aff;
-    border-bottom-right-radius: 6rpx;
-  }
-
-  &.bubble-assistant {
-    background: #fff;
-    border-bottom-left-radius: 6rpx;
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
-  }
+.row-user {
+  justify-content: flex-end;
 }
 
-.bubble-text {
-  font-size: 30rpx;
-  line-height: 1.6;
-  word-break: break-all;
-
-  .bubble-user & {
-    color: #fff;
-  }
-
-  .bubble-assistant & {
-    color: #1a1a1a;
-  }
-}
-
-.cursor {
-  font-size: 30rpx;
-  color: #007aff;
-  animation: blink 1s step-end infinite;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.error-tag {
-  display: block;
-  font-size: 22rpx;
-  color: #ff4d4f;
-  margin-top: 8rpx;
+.row-assistant {
+  justify-content: flex-start;
 }
 
 .input-bar {
   display: flex;
   align-items: flex-end;
+  gap: 16rpx;
   padding: 16rpx 24rpx;
   background: #fff;
   border-top: 1rpx solid #eee;
-  gap: 16rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
 }
 
 .input {
