@@ -20,7 +20,7 @@
         v-for="agent in agents"
         :key="agent.id"
         class="agent-item"
-        @tap="goEdit(agent)"
+        @tap="goDetail(agent)"
         @longpress="confirmDelete(agent.id, agent.name)"
       >
         <view class="agent-avatar">
@@ -57,13 +57,13 @@ async function onRefresh() {
   await agentStore.fetchAgents().catch(() => {})
 }
 
-function goCreate() {
-  uni.navigateTo({ url: '/pages/agents/form' })
+function goDetail(agent: Agent) {
+  agentStore.setCurrentAgent(agent)
+  uni.navigateTo({ url: `/pages/agents/detail?agentId=${agent.id}` })
 }
 
-function goEdit(agent: Agent) {
-  agentStore.setCurrentAgent(agent)
-  uni.navigateTo({ url: `/pages/agents/form?agentId=${agent.id}` })
+function goCreate() {
+  uni.navigateTo({ url: '/pages/agents/form' })
 }
 
 function confirmDelete(agentId: string, name: string) {

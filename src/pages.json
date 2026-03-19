@@ -35,6 +35,20 @@
 			}
 		},
 		{
+			"path": "pages/agents/detail",
+			"style": {
+				"navigationBarTitleText": "Agent 详情",
+				"navigationBarBackButtonText": "返回"
+			}
+		},
+		{
+			"path": "pages/tools/tools",
+			"style": {
+				"navigationBarTitleText": "工具目录",
+				"navigationBarBackButtonText": "返回"
+			}
+		},
+		{
 			"path": "pages/auth/login",
 			"style": {
 				"navigationBarTitleText": "登录",
