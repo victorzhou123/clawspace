@@ -12,8 +12,7 @@ export async function connectGateway(url: string, auth: AuthConfig): Promise<voi
     logger.error(TAG, err)
     throw new Error(err)
   }
-  const wsUrl = url.replace(/^http/, 'ws')
-  await wsManager.connect(wsUrl, auth)
+  await wsManager.connect(url, auth)
 }
 
 export function disconnectGateway(): void {

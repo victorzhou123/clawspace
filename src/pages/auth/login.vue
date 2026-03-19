@@ -10,7 +10,7 @@
         <input
           v-model="form.url"
           class="input"
-          placeholder="实例地址，如 http://192.168.1.1:18789"
+          placeholder="实例地址，如 ws://192.168.1.1:18789"
           :maxlength="256"
         />
         <input
@@ -58,8 +58,8 @@ async function handleLogin() {
     uni.showToast({ title: '请输入实例地址', icon: 'none' })
     return
   }
-  if (!/^https?:\/\/.+/.test(url)) {
-    uni.showToast({ title: '请输入完整地址（以 http:// 或 https:// 开头）', icon: 'none' })
+  if (!/^wss?:\/\/.+/.test(url)) {
+    uni.showToast({ title: '请输入完整地址（以 ws:// 或 wss:// 开头）', icon: 'none' })
     return
   }
   if (!token) {
