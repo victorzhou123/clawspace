@@ -28,12 +28,7 @@
 
         <view class="field">
           <text class="label">模型</text>
-          <input
-            v-model="form.model"
-            class="input"
-            placeholder="如 gpt-4o、claude-3-5-sonnet（可选）"
-            :maxlength="128"
-          />
+          <ModelPicker v-model="form.model" placeholder="默认（不指定）" />
         </view>
 
         <view class="field">
@@ -64,6 +59,7 @@ import { reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { guardAuth } from '@/utils/guard'
 import { useAgentStore } from '@/stores/agent'
+import ModelPicker from '@/components/ModelPicker.vue'
 
 const agentStore = useAgentStore()
 const saving = ref(false)
@@ -85,7 +81,9 @@ onLoad(async (options) => {
     // 从 API 实时获取数据，避免 store 缓存丢失
     loading.value = true
     try {
-      const agent = await agentStore.getAgent(agentId.value)
+      await agentStore.fetchAgents()
+      const agent = agentStore.agents.find(a => a.id === agentId.value)
+      if (!agent) throw new Error('not found')
       form.name = agent.name
       form.description = agent.description ?? ''
       form.model = agent.model ?? ''
