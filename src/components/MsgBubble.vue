@@ -3,7 +3,8 @@
     <!-- 用户消息：纯文本 -->
     <text v-if="isUser" class="bubble-text" :selectable="true">{{ content }}</text>
 
-    <!-- assistant 消息：markdown 渲染 -->
+    <!-- assistant 消息：流式期间纯文本，完成后 markdown 渲染 -->
+    <text v-else-if="isStreaming" class="bubble-text" :selectable="true">{{ content }}</text>
     <mp-html v-else :content="htmlContent" :selectable="true" />
 
     <text v-if="isStreaming" class="cursor">▋</text>

@@ -58,6 +58,10 @@ async function handleLogin() {
     uni.showToast({ title: '请输入实例地址', icon: 'none' })
     return
   }
+  if (!/^https?:\/\/.+/.test(url)) {
+    uni.showToast({ title: '请输入完整地址（以 http:// 或 https:// 开头）', icon: 'none' })
+    return
+  }
   if (!token) {
     uni.showToast({ title: '请输入 Token', icon: 'none' })
     return
@@ -81,7 +85,7 @@ async function handleLogin() {
       ? '认证失败，请检查 Token'
       : msg.includes('timeout') || msg.includes('connect')
         ? '连接超时，请检查地址和网络'
-        : '连接失败：' + msg
+        : '连接失败，请检查地址和 Token'
   } finally {
     loading.value = false
   }
