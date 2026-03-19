@@ -1,8 +1,24 @@
 <template>
   <view class="chat-page">
+    <!-- 自定义导航栏 -->
+    <view class="nav-bar">
+      <view class="nav-left" @tap="openDrawer">
+        <view class="hamburger">
+          <view class="bar" />
+          <view class="bar" />
+          <view class="bar" />
+        </view>
+      </view>
+      <text class="nav-title">{{ currentSessionTitle || 'ClawSpace' }}</text>
+      <view class="nav-right" />
+    </view>
+
+    <!-- 抽屉 -->
+    <DrawerMenu :visible="drawerOpen" @close="drawerOpen = false" />
+
     <!-- 无会话状态 -->
     <view v-if="!currentSessionId" class="no-session">
-      <text class="no-session-text">请从「会话」标签选择一个会话</text>
+      <text class="no-session-text">点击左上角菜单选择会话</text>
     </view>
 
     <template v-else>
@@ -15,7 +31,6 @@
         @scrolltoupper="onLoadMore"
       >
         <view class="message-list-inner">
-          <!-- 加载更多 -->
           <view v-if="loadingMore" class="load-more-tip">
             <text>加载中...</text>
           </view>
@@ -42,7 +57,6 @@
             />
           </view>
 
-          <!-- 底部锚点 -->
           <view id="msg-bottom" style="height: 1px;" />
         </view>
       </scroll-view>
@@ -58,11 +72,7 @@
           :disabled="sending"
           @confirm="onSend"
         />
-        <button
-          v-if="streaming"
-          class="btn-action btn-abort"
-          @tap="onAbort"
-        >停止</button>
+        <button v-if="streaming" class="btn-action btn-abort" @tap="onAbort">停止</button>
         <button
           v-else
           class="btn-action btn-send"
@@ -75,28 +85,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
 import MsgBubble from '@/components/MsgBubble.vue'
+import DrawerMenu from '@/components/DrawerMenu.vue'
 
 const sessionStore = useSessionStore()
 const chatStore = useChatStore()
-const { currentSessionId } = storeToRefs(sessionStore)
+const { currentSessionId, sessions } = storeToRefs(sessionStore)
 const { messages, sending, streaming, hasMore } = storeToRefs(chatStore)
 
 const inputText = ref('')
 const scrollAnchor = ref('msg-bottom')
 const chatLoading = ref(false)
 const loadingMore = ref(false)
+const drawerOpen = ref(false)
 let unsubscribeFn: (() => void) | null = null
+
+const currentSessionTitle = computed(() => {
+  if (!currentSessionId.value) return ''
+  const s = sessions.value.find(s => s.key === currentSessionId.value)
+  return s?.label || s?.derivedTitle || s?.displayName || currentSessionId.value
+})
 
 onLoad(() => { guardAuth() })
 
 onShow(async () => {
+  // 初次加载会话列表（抽屉需要）
+  if (sessionStore.sessions.length === 0) {
+    await sessionStore.fetchSessions().catch(() => {})
+  }
+
   const sessionId = sessionStore.currentSessionId
   if (!sessionId) return
   if (sessionId === chatStore.currentSessionId) return
@@ -115,17 +138,28 @@ onShow(async () => {
   }
 })
 
-onUnload(() => {
-  unsubscribeFn?.()
+// 切换会话时重新加载
+watch(currentSessionId, async (sessionId) => {
+  if (!sessionId) return
+  if (sessionId === chatStore.currentSessionId) return
+  chatLoading.value = true
+  chatStore.clearMessages()
+  try {
+    await chatStore.loadHistory(sessionId)
+    unsubscribeFn?.()
+    unsubscribeFn = chatStore.subscribeStream(sessionId)
+    scrollToBottom()
+  } catch {
+    uni.showToast({ title: '加载失败', icon: 'none' })
+  } finally {
+    chatLoading.value = false
+  }
 })
 
-// 新消息时滚动到底部
-watch(
-  () => messages.value.length,
-  () => scrollToBottom(),
-)
+onUnload(() => { unsubscribeFn?.() })
 
-// 流式更新时滚动跟随（节流，避免高频 delta 堆积 nextTick）
+watch(() => messages.value.length, () => scrollToBottom())
+
 let scrollTimer: ReturnType<typeof setTimeout> | null = null
 watch(
   () => {
@@ -149,10 +183,13 @@ function scrollToBottom() {
   })
 }
 
+function openDrawer() {
+  drawerOpen.value = true
+}
+
 async function onLoadMore() {
   const sessionId = sessionStore.currentSessionId
   if (!sessionId || loadingMore.value || !hasMore.value) return
-  // 记录加载前第一条消息 id，加载后定位回去
   const firstMsgId = messages.value[0]?.id
   loadingMore.value = true
   try {
@@ -175,8 +212,6 @@ async function onSend() {
   if (!content || sending.value) return
   const sessionId = sessionStore.currentSessionId
   if (!sessionId) return
-
-  // H5 uni-textarea v-model 同步问题：先置空再 nextTick 确保视图更新
   inputText.value = ''
   await nextTick()
   try {
@@ -198,7 +233,51 @@ async function onAbort() {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f5f5f5;
+  background-color: #111;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 24rpx;
+  padding-top: env(safe-area-inset-top);
+  height: calc(88rpx + env(safe-area-inset-top));
+  background: #1c1c1e;
+  border-bottom: 1rpx solid #2c2c2e;
+  flex-shrink: 0;
+}
+
+.nav-left, .nav-right {
+  width: 80rpx;
+  display: flex;
+  align-items: center;
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #e5e5e7;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  padding: 8rpx;
+  cursor: pointer;
+
+  .bar {
+    width: 44rpx;
+    height: 4rpx;
+    background: #e5e5e7;
+    border-radius: 2rpx;
+  }
 }
 
 .no-session {
@@ -209,17 +288,24 @@ async function onAbort() {
 
   .no-session-text {
     font-size: 28rpx;
-    color: #999;
+    color: #666;
   }
 }
 
 .message-list {
   flex: 1;
-  overflow: hidden;
+  min-height: 0;
 }
 
 .message-list-inner {
-  padding: 24rpx 24rpx 0;
+  padding: 16rpx 0 8rpx;
+}
+
+.load-more-tip {
+  text-align: center;
+  padding: 16rpx;
+  font-size: 24rpx;
+  color: #666;
 }
 
 .empty-chat {
@@ -228,30 +314,15 @@ async function onAbort() {
   justify-content: center;
   padding: 80rpx 0;
 
-  .empty-chat-text {
-    font-size: 28rpx;
-    color: #bbb;
-  }
-}
-
-.load-more-tip {
-  text-align: center;
-  padding: 20rpx 0;
-  font-size: 24rpx;
-  color: #bbb;
+  .empty-chat-text { font-size: 28rpx; color: #666; }
 }
 
 .bubble-row {
   display: flex;
-  margin-bottom: 24rpx;
-}
+  padding: 8rpx 24rpx;
 
-.row-user {
-  justify-content: flex-end;
-}
-
-.row-assistant {
-  justify-content: flex-start;
+  &.row-user { justify-content: flex-end; }
+  &.row-assistant { justify-content: flex-start; }
 }
 
 .input-bar {
@@ -259,20 +330,22 @@ async function onAbort() {
   align-items: flex-end;
   gap: 16rpx;
   padding: 16rpx 24rpx;
-  background: #fff;
-  border-top: 1rpx solid #eee;
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  background: #1c1c1e;
+  border-top: 1rpx solid #2c2c2e;
+  flex-shrink: 0;
 }
 
 .input {
   flex: 1;
   min-height: 72rpx;
   max-height: 200rpx;
-  background: #f5f5f5;
+  background: #2c2c2e;
   border-radius: 16rpx;
   padding: 16rpx 20rpx;
   font-size: 30rpx;
   line-height: 1.5;
+  color: #e5e5e7;
 }
 
 .btn-action {
@@ -289,10 +362,7 @@ async function onAbort() {
 .btn-send {
   background: #007aff;
   color: #fff;
-
-  &[disabled] {
-    opacity: 0.4;
-  }
+  &[disabled] { opacity: 0.4; }
 }
 
 .btn-abort {

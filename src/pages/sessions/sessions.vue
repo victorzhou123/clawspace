@@ -53,7 +53,7 @@ async function onRefresh() {
 
 function openSession(key: string) {
   sessionStore.setCurrentSession(key)
-  uni.switchTab({ url: '/pages/chat/chat' })
+  uni.navigateBack()
 }
 
 function onLongPress(key: string, title: string) {

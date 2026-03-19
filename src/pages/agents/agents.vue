@@ -1,7 +1,11 @@
 <template>
   <view class="agents-page">
-    <!-- 新建按钮 -->
-    <view class="header-action">
+    <!-- 自定义导航栏 -->
+    <view class="nav-bar">
+      <view class="nav-back" @tap="() => uni.navigateBack()">
+        <text class="nav-back-text">‹</text>
+      </view>
+      <text class="nav-title">Agent 管理</text>
       <text class="create-btn" @tap="goCreate">+ 新建</text>
     </view>
 
@@ -89,17 +93,36 @@ function confirmDelete(agentId: string, name: string) {
   background-color: #f5f5f5;
 }
 
-.header-action {
+.nav-bar {
   display: flex;
-  justify-content: flex-end;
-  padding: 16rpx 32rpx;
+  align-items: center;
+  padding: 0 24rpx;
+  padding-top: env(safe-area-inset-top);
+  height: calc(88rpx + env(safe-area-inset-top));
   background: #fff;
   border-bottom: 1rpx solid #eee;
+  flex-shrink: 0;
+
+  .nav-back {
+    width: 60rpx;
+    display: flex;
+    align-items: center;
+    .nav-back-text { font-size: 56rpx; color: #007aff; line-height: 1; margin-top: -4rpx; }
+  }
+
+  .nav-title {
+    flex: 1;
+    text-align: center;
+    font-size: 32rpx;
+    font-weight: 500;
+    color: #1a1a1a;
+  }
 
   .create-btn {
     font-size: 28rpx;
     color: #007aff;
-    padding: 8rpx 0;
+    width: 80rpx;
+    text-align: right;
   }
 }
 

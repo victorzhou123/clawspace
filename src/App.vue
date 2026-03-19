@@ -14,7 +14,6 @@ onLaunch(async () => {
     uni.reLaunch({ url: "/pages/auth/login" });
     return false;
   };
-  uni.addInterceptor("switchTab", { invoke: checkAuth });
   uni.addInterceptor("navigateTo", { invoke: checkAuth });
   uni.addInterceptor("redirectTo", { invoke: checkAuth });
   uni.addInterceptor("reLaunch", { invoke: checkAuth });
