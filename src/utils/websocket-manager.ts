@@ -1,7 +1,7 @@
 // WebSocket 管理器（连接、重连、心跳）
 
 import { logger } from '@/utils/logger'
-import type { AuthConfig, RpcRequest, RpcResponse, WsEvent, ConnectionStatus } from '@/types/websocket'
+import type { AuthConfig, RpcRequest, ConnectionStatus } from '@/types/websocket'
 
 const TAG = 'WebSocket'
 const REQUEST_TIMEOUT = 30000
@@ -22,12 +22,13 @@ export class WebSocketManager {
   private url = ''
   private auth: AuthConfig | null = null
   private requestId = 0
-  private pending = new Map<number, PendingRequest>()
+  private pending = new Map<string, PendingRequest>()
   private handlers = new Map<string, Set<EventHandler>>()
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null
   private reconnectAttempts = 0
   private reconnecting = false
   private destroyed = false
+  private authFailed = false  // 认证失败，禁止重连
   private _status: ConnectionStatus = 'disconnected'
 
   get status(): ConnectionStatus {
@@ -38,6 +39,7 @@ export class WebSocketManager {
     this.url = url
     this.auth = auth
     this.destroyed = false
+    this.authFailed = false
     this._status = 'connecting'
     return this._connect()
   }
@@ -46,12 +48,20 @@ export class WebSocketManager {
     return new Promise((resolve, reject) => {
       logger.info(TAG, `connecting to ${this.url}`)
 
+      const connectTimeout = setTimeout(() => {
+        if (this._status !== 'connected') {
+          this.ws?.close({})
+          reject(new Error('连接超时，请检查实例地址'))
+        }
+      }, 5000)
+
       this.ws = uni.connectSocket({
         url: this.url,
         complete: () => {},
       })
 
       this.ws.onOpen(() => {
+        clearTimeout(connectTimeout)
         logger.info(TAG, 'connected')
         this._status = 'connected'
         this.reconnectAttempts = 0
@@ -62,11 +72,26 @@ export class WebSocketManager {
         this._sendHandshake()
           .then(() => {
             logger.info(TAG, 'handshake successful')
+            // 握手成功后清除敏感字段
+            if (this.auth) {
+              delete (this.auth as Record<string, unknown>).password
+            }
             resolve()
           })
           .catch((err) => {
             logger.error(TAG, 'handshake failed', err)
             this._status = 'error'
+            // 认证类错误不重连，避免触发后端限流
+            const msg = (err as Error).message ?? ''
+            if (msg.includes('unauthorized') || msg.includes('invalid') || msg.includes('origin') || msg.includes('token')) {
+              this.authFailed = true
+            }
+            this.ws?.close({})
+            this.ws = null
+            // 握手成功后清除敏感字段
+            if (this.auth) {
+              delete (this.auth as Record<string, unknown>).password
+            }
             reject(err)
           })
       })
@@ -84,7 +109,7 @@ export class WebSocketManager {
         logger.warn(TAG, 'connection closed')
         this._status = 'disconnected'
         this._stopHeartbeat()
-        if (!this.destroyed && !this.reconnecting) this._scheduleReconnect()
+        if (!this.destroyed && !this.reconnecting && !this.authFailed) this._scheduleReconnect()
       })
 
       this.ws.onError((err) => {
@@ -111,31 +136,47 @@ export class WebSocketManager {
     }
 
     const connectParams = {
-      minProtocol: 1,
-      maxProtocol: 1,
+      minProtocol: 3,
+      maxProtocol: 3,
       client: {
-        id: 'clawspace-uniapp',
+        id: 'openclaw-control-ui',
         version: '1.0.0',
         platform: 'uniapp',
-        mode: 'client'
+        mode: 'ui'
       },
+      role: 'operator',
+      scopes: ['operator.read', 'operator.write'],
       auth: authPayload
     }
 
     logger.debug(TAG, 'sending handshake')
 
-    // 使用 call() 方法发送握手请求，这样可以等待响应
-    return this.call('connect', connectParams).then(() => {
-      // 握手成功，不需要返回值
-    }) as Promise<void>
+    // 握手使用内部 _call，绕过 connected 状态检查
+    return this._call('connect', connectParams).then(() => {}) as Promise<void>
+  }
+
+  // 内部 call，不检查连接状态（用于握手）
+  private _call(method: string, params?: unknown): Promise<unknown> {
+    const id = String(++this.requestId)
+    const req: RpcRequest = { type: 'req', id, method, params }
+
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pending.delete(id)
+        reject(new Error(`RPC timeout: ${method}`))
+      }, REQUEST_TIMEOUT)
+
+      this.pending.set(id, { resolve, reject, timer })
+      this._send(req)
+    })
   }
 
   call(method: string, params?: unknown): Promise<unknown> {
     if (this._status !== 'connected') {
       return Promise.reject(new Error(`WebSocket not connected (status: ${this._status})`))
     }
-    const id = ++this.requestId
-    const req: RpcRequest = { id, method, params }
+    const id = String(++this.requestId)
+    const req: RpcRequest = { type: 'req', id, method, params }
 
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -174,28 +215,33 @@ export class WebSocketManager {
     }
   }
 
-  private _handleMessage(data: RpcResponse & WsEvent): void {
-    // 调试：记录所有收到的消息
+  private _handleMessage(data: Record<string, unknown>): void {
     logger.debug(TAG, 'received message:', data)
 
-    // RPC 响应
-    if (data.id !== undefined && this.pending.has(data.id)) {
-      const req = this.pending.get(data.id)!
-      clearTimeout(req.timer)
-      this.pending.delete(data.id)
-      if (data.error) {
-        req.reject(new Error(data.error.message))
-      } else {
-        req.resolve(data.result)
+    // RPC 响应：{type:"res", id, ok, payload|error}
+    if (data['type'] === 'res' && data['id'] !== undefined) {
+      const id = String(data['id'])
+      if (this.pending.has(id)) {
+        const req = this.pending.get(id)!
+        clearTimeout(req.timer)
+        this.pending.delete(id)
+        if (!data['ok']) {
+          const err = data['error'] as { message?: string } | undefined
+          req.reject(new Error(err?.message ?? 'RPC error'))
+        } else {
+          req.resolve(data['payload'])
+        }
       }
       return
     }
 
-    // 服务器推送事件
-    if (data.event) {
-      logger.debug(TAG, `event received: ${data.event}`, data.data)
-      const handlers = this.handlers.get(data.event)
-      if (handlers) handlers.forEach(h => h(data.data))
+    // 服务器推送事件：{type:"event", event, payload}
+    if (data['type'] === 'event' && data['event']) {
+      const event = data['event'] as string
+      const payload = data['payload']
+      logger.debug(TAG, `event received: ${event}`, payload)
+      const handlers = this.handlers.get(event)
+      if (handlers) handlers.forEach(h => h(payload))
     }
   }
 
