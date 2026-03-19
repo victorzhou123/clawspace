@@ -125,13 +125,21 @@ watch(
   () => scrollToBottom(),
 )
 
-// 流式更新时滚动跟随
+// 流式更新时滚动跟随（节流，避免高频 delta 堆积 nextTick）
+let scrollTimer: ReturnType<typeof setTimeout> | null = null
 watch(
   () => {
     const last = messages.value[messages.value.length - 1]
     return last?.isStreaming ? last.content : null
   },
-  (val) => { if (val !== null) scrollToBottom() },
+  (val) => {
+    if (val === null) return
+    if (scrollTimer) return
+    scrollTimer = setTimeout(() => {
+      scrollTimer = null
+      scrollToBottom()
+    }, 200)
+  },
 )
 
 function scrollToBottom() {
@@ -168,7 +176,9 @@ async function onSend() {
   const sessionId = sessionStore.currentSessionId
   if (!sessionId) return
 
+  // H5 uni-textarea v-model 同步问题：先置空再 nextTick 确保视图更新
   inputText.value = ''
+  await nextTick()
   try {
     await chatStore.sendMessage(sessionId, content)
   } catch {

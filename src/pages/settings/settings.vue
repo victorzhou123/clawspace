@@ -9,6 +9,7 @@
         <view class="user-info">
           <text class="user-name">{{ userName }}</text>
           <text class="user-status">已登录</text>
+          <text v-if="instanceUrl" class="user-instance">{{ instanceUrl }}</text>
         </view>
       </view>
 
@@ -21,6 +22,10 @@
         </view>
         <view class="item" @tap="goTools">
           <text class="item-label">工具目录</text>
+          <text class="arrow">›</text>
+        </view>
+        <view class="item" @tap="goCron">
+          <text class="item-label">定时任务</text>
           <text class="arrow">›</text>
         </view>
         <view class="item" @tap="goMonitor">
@@ -130,6 +135,10 @@ function goTools() {
   uni.navigateTo({ url: '/pages/tools/tools' })
 }
 
+function goCron() {
+  uni.navigateTo({ url: '/pages/cron/list' })
+}
+
 function checkUpdate() {
   uni.showToast({ title: '已是最新版本', icon: 'none' })
 }
@@ -203,6 +212,14 @@ function confirmLogout() {
   .user-status {
     font-size: 26rpx;
     color: #52c41a;
+  }
+
+  .user-instance {
+    font-size: 22rpx;
+    color: #999;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
