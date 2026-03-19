@@ -93,43 +93,56 @@ export const useChatStore = defineStore('chat', () => {
 
   /**
    * 订阅流式消息推送，返回取消订阅函数
-   * 后端推送事件：agent { sessionKey, type, ... }
+   * 后端推送事件：chat { runId, sessionKey, seq, state, message, errorMessage }
+   * state: 'delta' | 'final' | 'aborted' | 'error'
    */
   function subscribeStream(sessionKey: string): () => void {
-    const onAgentEvent = (data: unknown) => {
+    const onChatEvent = (data: unknown) => {
       const d = data as Record<string, unknown>
       if (d.sessionKey !== sessionKey) return
 
-      const type = d.type as string | undefined
+      const state = d.state as string | undefined
+      const msgId = (d.runId as string | undefined) ?? 'stream-current'
 
-      if (type === 'text' || type === 'content_delta') {
+      if (state === 'delta') {
         streaming.value = true
-        const msgId = (d.runId as string | undefined) ?? 'stream-current'
-        const delta = (d.text ?? d.delta ?? '') as string
+        const msg = d.message as Record<string, unknown> | undefined
+        // delta 携带的是累积全文，直接替换而非追加
+        const text = extractMessageText(msg ?? {})
         const idx = messages.value.findIndex(m => m.id === msgId)
         if (idx === -1) {
           messages.value.push({
             id: msgId,
             role: 'assistant',
-            content: delta,
+            content: text,
             timestamp: Date.now(),
             isStreaming: true,
           })
         } else {
+          // 直接修改属性，避免替换整个对象触发深度响应式更新
+          messages.value[idx].content = text
+        }
+      } else if (state === 'final') {
+        streaming.value = false
+        const msg = d.message as Record<string, unknown> | undefined
+        const idx = messages.value.findIndex(m => m.id === msgId)
+        if (idx !== -1) {
+          const finalText = msg ? extractMessageText(msg) : messages.value[idx].content
           messages.value[idx] = {
             ...messages.value[idx],
-            content: messages.value[idx].content + delta,
+            content: finalText,
+            isStreaming: false,
+            status: 'sent',
           }
         }
-      } else if (type === 'done' || type === 'stop') {
+      } else if (state === 'aborted' || state === 'error') {
         streaming.value = false
-        const msgId = (d.runId as string | undefined) ?? 'stream-current'
-        _updateMessage(msgId, { isStreaming: false, status: 'sent' })
+        _updateMessage(msgId, { isStreaming: false, status: state === 'error' ? 'error' : 'sent' })
       }
     }
 
-    subscribe('agent', onAgentEvent)
-    return () => unsubscribe('agent', onAgentEvent)
+    subscribe('chat', onChatEvent)
+    return () => unsubscribe('chat', onChatEvent)
   }
 
   function _updateMessage(id: string, patch: Partial<Message>) {

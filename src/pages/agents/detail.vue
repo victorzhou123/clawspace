@@ -10,7 +10,7 @@
         <view class="card">
           <view class="agent-header">
             <view class="agent-avatar">
-              <text class="avatar-text">{{ agent.name.charAt(0).toUpperCase() }}</text>
+              <text class="avatar-text">{{ (agent.name || agent.id || '?').charAt(0).toUpperCase() }}</text>
             </view>
             <view class="agent-title">
               <text class="agent-name">{{ agent.name }}</text>
@@ -48,6 +48,12 @@
             <text class="meta-label">Agent ID</text>
             <text class="meta-value id-text" :selectable="true">{{ agent.id }}</text>
           </view>
+        </view>
+
+        <!-- 文件管理 -->
+        <view class="card action-card" @tap="goFiles">
+          <text class="action-label">工作区文件</text>
+          <text class="arrow">›</text>
         </view>
       </scroll-view>
 
@@ -100,6 +106,10 @@ function formatTime(ts: number): string {
 
 function goEdit() {
   uni.navigateTo({ url: `/pages/agents/form?agentId=${agent.value!.id}` })
+}
+
+function goFiles() {
+  uni.navigateTo({ url: `/pages/agents/files?agentId=${agent.value!.id}` })
 }
 
 function confirmDelete() {
@@ -233,6 +243,18 @@ function confirmDelete() {
 
 .meta-card {
   margin-bottom: 24rpx;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+  cursor: pointer;
+  &:active { opacity: 0.7; }
+
+  .action-label { font-size: 30rpx; color: #1a1a1a; }
+  .arrow { font-size: 40rpx; color: #ccc; }
 }
 
 .meta-row {

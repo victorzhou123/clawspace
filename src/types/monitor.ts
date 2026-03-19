@@ -49,6 +49,6 @@ export interface StatusSummary {
 
 export interface HealthSnapshot {
   ts: number
-  ok?: boolean
-  [key: string]: unknown
+  ok: boolean
+  version?: string
 }

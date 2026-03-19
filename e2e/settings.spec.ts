@@ -16,7 +16,7 @@ test.describe('设置模块', () => {
     await page.locator('.uni-tabbar').locator('text=设置').click();
     await page.locator('text=清除缓存').click();
     await expect(page.locator('text=将清除本地缓存数据')).toBeVisible({ timeout: 3000 });
-    await page.locator('text=OK').click();
+    await page.locator('.uni-modal__btn_primary').click();
     await expect(page.locator('text=已清除')).toBeVisible({ timeout: 3000 });
   });
 
@@ -38,6 +38,19 @@ test.describe('设置模块', () => {
     await page.locator('.uni-tabbar').locator('text=设置').click();
     await page.locator('text=工具目录').click();
     await expect(page.locator('.tools-page')).toBeVisible({ timeout: 5000 });
+  });
+
+  test('06 - 系统状态入口', async ({ page }) => {
+    await login(page);
+    await page.locator('.uni-tabbar').locator('text=设置').click();
+    await expect(page.locator('text=系统状态')).toBeVisible();
+  });
+
+  test('07 - 系统状态跳转', async ({ page }) => {
+    await login(page);
+    await page.locator('.uni-tabbar').locator('text=设置').click();
+    await page.locator('text=系统状态').click();
+    await expect(page.locator('.monitor-page')).toBeVisible({ timeout: 5000 });
   });
 
 });

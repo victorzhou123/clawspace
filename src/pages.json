@@ -42,9 +42,37 @@
 			}
 		},
 		{
+			"path": "pages/agents/files",
+			"style": {
+				"navigationBarTitleText": "Agent 文件",
+				"navigationBarBackButtonText": "返回"
+			}
+		},
+		{
 			"path": "pages/tools/tools",
 			"style": {
 				"navigationBarTitleText": "工具目录",
+				"navigationBarBackButtonText": "返回"
+			}
+		},
+		{
+			"path": "pages/cron/list",
+			"style": {
+				"navigationBarTitleText": "定时任务",
+				"navigationBarBackButtonText": "返回"
+			}
+		},
+		{
+			"path": "pages/cron/detail",
+			"style": {
+				"navigationBarTitleText": "任务详情",
+				"navigationBarBackButtonText": "返回"
+			}
+		},
+		{
+			"path": "pages/cron/form",
+			"style": {
+				"navigationBarTitleText": "新建任务",
 				"navigationBarBackButtonText": "返回"
 			}
 		},

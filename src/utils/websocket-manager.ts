@@ -5,7 +5,6 @@ import type { AuthConfig, RpcRequest, ConnectionStatus } from '@/types/websocket
 
 const TAG = 'WebSocket'
 const REQUEST_TIMEOUT = 30000
-const HEARTBEAT_INTERVAL = 30000
 const MAX_RECONNECT_ATTEMPTS = 5
 const RECONNECT_BASE_DELAY = 1000
 
@@ -24,7 +23,6 @@ export class WebSocketManager {
   private requestId = 0
   private pending = new Map<string, PendingRequest>()
   private handlers = new Map<string, Set<EventHandler>>()
-  private heartbeatTimer: ReturnType<typeof setInterval> | null = null
   private reconnectAttempts = 0
   private reconnecting = false
   private destroyed = false
@@ -66,7 +64,6 @@ export class WebSocketManager {
         this._status = 'connected'
         this.reconnectAttempts = 0
         this.reconnecting = false
-        this._startHeartbeat()
 
         // 发送握手并等待响应
         this._sendHandshake()
@@ -108,7 +105,6 @@ export class WebSocketManager {
       this.ws.onClose(() => {
         logger.warn(TAG, 'connection closed')
         this._status = 'disconnected'
-        this._stopHeartbeat()
         if (!this.destroyed && !this.reconnecting && !this.authFailed) this._scheduleReconnect()
       })
 
@@ -201,7 +197,6 @@ export class WebSocketManager {
   disconnect(): void {
     this.destroyed = true
     this._status = 'disconnected'
-    this._stopHeartbeat()
     this.ws?.close({})
     this.ws = null
     this._rejectAllPending(new Error('WebSocket disconnected'))
@@ -242,20 +237,6 @@ export class WebSocketManager {
       logger.debug(TAG, `event received: ${event}`, payload)
       const handlers = this.handlers.get(event)
       if (handlers) handlers.forEach(h => h(payload))
-    }
-  }
-
-  private _startHeartbeat(): void {
-    this._stopHeartbeat()
-    this.heartbeatTimer = setInterval(() => {
-      this._call('heartbeat', {}).catch(() => {})
-    }, HEARTBEAT_INTERVAL)
-  }
-
-  private _stopHeartbeat(): void {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer)
-      this.heartbeatTimer = null
     }
   }
 

@@ -24,7 +24,7 @@
         @longpress="confirmDelete(agent.id, agent.name)"
       >
         <view class="agent-avatar">
-          <text class="avatar-text">{{ agent.name.charAt(0).toUpperCase() }}</text>
+          <text class="avatar-text">{{ (agent.name || agent.id || '?').charAt(0).toUpperCase() }}</text>
         </view>
         <view class="agent-info">
           <text class="agent-name">{{ agent.name }}</text>

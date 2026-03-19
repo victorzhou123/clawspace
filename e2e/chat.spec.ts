@@ -42,11 +42,13 @@ test.describe('聊天模块', () => {
     const hasSession = await loginAndOpenFirstSession(page);
     if (!hasSession) { test.skip(); return; }
 
+    // 等历史消息加载完再记录基准
+    await page.waitForTimeout(2000);
     const msgBefore = await page.locator('.bubble-user').count();
     await page.locator('.input textarea').fill('你好');
     await page.locator('.btn-send').click();
 
-    await expect(page.locator('.bubble-user')).toHaveCount(msgBefore + 1, { timeout: 3000 });
+    await expect(page.locator('.bubble-user')).toHaveCount(msgBefore + 1, { timeout: 5000 });
   });
 
   test('06 - 消息历史加载', async ({ page }) => {

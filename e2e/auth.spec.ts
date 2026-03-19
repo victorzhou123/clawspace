@@ -29,11 +29,27 @@ test.describe('登录模块', () => {
 
   test('05 - 错误 URL 连接失败', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('textbox').first().fill('http://192.168.99.99:18789');
+    await page.getByRole('textbox').first().fill('ws://192.168.99.99:18789');
     await page.getByRole('textbox').nth(1).fill(TOKEN);
     await page.locator('text=连接').click();
     await expect(page.locator('.error-msg')).toBeVisible({ timeout: 6000 });
     await expect(page.locator('.error-msg')).toContainText('连接');
+  });
+
+  test('05b - http:// 格式 URL 被拒绝', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('textbox').first().fill('http://192.168.22.177:18789');
+    await page.getByRole('textbox').nth(1).fill(TOKEN);
+    await page.locator('text=连接').click();
+    await expect(page.locator('text=请输入完整地址（以 ws:// 或 wss:// 开头）')).toBeVisible({ timeout: 3000 });
+  });
+
+  test('05c - Token 少于 16 字符被拒绝', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('textbox').first().fill(INSTANCE_URL);
+    await page.getByRole('textbox').nth(1).fill('short');
+    await page.locator('text=连接').click();
+    await expect(page.locator('text=Token 格式无效（至少 16 字符）')).toBeVisible({ timeout: 3000 });
   });
 
   test('06 - 正确 URL 错误 Token 认证失败', async ({ page }) => {

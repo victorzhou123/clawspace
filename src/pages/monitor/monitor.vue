@@ -115,11 +115,15 @@ import { useMonitorStore } from '@/stores/monitor'
 const monitorStore = useMonitorStore()
 const { healthData, statusData, usageData, loading } = storeToRefs(monitorStore)
 
-const healthOk = computed(() => healthData.value != null)
+const healthOk = computed(() => healthData.value?.ok === true)
 const healthTime = computed(() => {
-  const ts = (healthData.value as any)?.ts
+  const ts = healthData.value?.ts
   if (!ts) return ''
-  return new Date(ts).toLocaleTimeString()
+  const d = new Date(ts)
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  const ss = String(d.getSeconds()).padStart(2, '0')
+  return `${hh}:${mm}:${ss}`
 })
 
 onLoad(() => { guardAuth() })
@@ -131,7 +135,7 @@ onShow(async () => {
 })
 
 async function onRefresh() {
-  await monitorStore.fetchAll().catch(() => {})
+  await monitorStore.fetchAll(true).catch(() => {})
 }
 
 function progressColor(pct: number) {
