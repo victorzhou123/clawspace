@@ -24,10 +24,13 @@ export interface ToolCall {
 }
 
 export interface ChatSession {
-  id: string
-  title: string
-  createdAt: number
-  updatedAt: number
-  messageCount: number
-  preview?: string
+  // sessionKey，格式：agent:<agentId>:<sessionId> 或 global
+  key: string
+  kind: 'direct' | 'group' | 'global' | 'unknown'
+  label?: string
+  displayName?: string
+  derivedTitle?: string
+  lastMessagePreview?: string
+  updatedAt: number | null
+  sessionId?: string
 }

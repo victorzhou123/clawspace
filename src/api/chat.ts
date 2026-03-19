@@ -2,16 +2,24 @@
 
 import { rpc } from './websocket'
 import type { Message } from '@/types/chat'
-import type { PaginationParams, PaginationResult } from '@/types/common'
 
-export function chatHistory(sessionId: string, params?: Partial<PaginationParams>): Promise<PaginationResult<Message>> {
-  return rpc('chat.history', { sessionId, ...params })
+export interface ChatHistoryResult {
+  messages: Message[]
 }
 
-export function chatSend(sessionId: string, content: string): Promise<void> {
-  return rpc('chat.send', { sessionId, content })
+// sessionKey 格式：agent:<agentId>:<sessionId> 或 global
+export function chatHistory(sessionKey: string, limit = 50): Promise<ChatHistoryResult> {
+  return rpc('chat.history', { sessionKey, limit })
 }
 
-export function chatAbort(sessionId: string): Promise<void> {
-  return rpc('chat.abort', { sessionId })
+export function chatSend(sessionKey: string, message: string, idempotencyKey?: string): Promise<void> {
+  return rpc('chat.send', {
+    sessionKey,
+    message,
+    idempotencyKey: idempotencyKey ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  })
+}
+
+export function chatAbort(sessionKey: string): Promise<void> {
+  return rpc('chat.abort', { sessionKey })
 }

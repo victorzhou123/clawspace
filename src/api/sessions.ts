@@ -1,25 +1,37 @@
 // 会话管理 API
+// 后端使用 sessionKey（格式：agent:<agentId>:<sessionId> 或 global）作为会话标识
 
 import { rpc } from './websocket'
 import type { ChatSession } from '@/types/chat'
-import type { PaginationParams, PaginationResult } from '@/types/common'
 
-export function sessionsList(params?: Partial<PaginationParams>): Promise<PaginationResult<ChatSession>> {
-  return rpc('sessions.list', params)
+export interface SessionsListParams {
+  limit?: number
+  includeDerivedTitles?: boolean
+  includeLastMessage?: boolean
+  agentId?: string
 }
 
-export function sessionsPreview(sessionId: string): Promise<ChatSession> {
-  return rpc('sessions.preview', { sessionId })
+export interface SessionsListResult {
+  sessions: ChatSession[]
 }
 
-export function sessionsPatch(sessionId: string, data: Partial<Pick<ChatSession, 'title'>>): Promise<ChatSession> {
-  return rpc('sessions.patch', { sessionId, ...data })
+export function sessionsList(params?: SessionsListParams): Promise<SessionsListResult> {
+  return rpc('sessions.list', params ?? {})
 }
 
-export function sessionsDelete(sessionId: string): Promise<void> {
-  return rpc('sessions.delete', { sessionId })
+// keys 是 sessionKey 数组
+export function sessionsPreview(keys: string[]): Promise<unknown> {
+  return rpc('sessions.preview', { keys })
 }
 
-export function sessionsReset(sessionId: string): Promise<void> {
-  return rpc('sessions.reset', { sessionId })
+export function sessionsPatch(key: string, data: { label?: string | null }): Promise<unknown> {
+  return rpc('sessions.patch', { key, ...data })
+}
+
+export function sessionsDelete(key: string): Promise<void> {
+  return rpc('sessions.delete', { key })
+}
+
+export function sessionsReset(key: string): Promise<void> {
+  return rpc('sessions.reset', { key })
 }

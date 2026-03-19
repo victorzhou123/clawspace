@@ -3,14 +3,17 @@
 export type ConnectionStatus = 'connected' | 'connecting' | 'disconnected' | 'error'
 
 export interface RpcRequest {
-  id: number
+  type: 'req'
+  id: string
   method: string
   params?: unknown
 }
 
 export interface RpcResponse {
-  id: number
-  result?: unknown
+  type: 'res'
+  id: string
+  ok: boolean
+  payload?: unknown
   error?: {
     code: number
     message: string
@@ -18,8 +21,11 @@ export interface RpcResponse {
 }
 
 export interface WsEvent {
+  type: 'event'
   event: string
-  data: unknown
+  payload: unknown
+  seq?: number
+  stateVersion?: number
 }
 
 export interface AuthConfig {

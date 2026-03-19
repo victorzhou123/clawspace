@@ -6,14 +6,14 @@ import type { AuthConfig } from '@/types/websocket'
 
 const TAG = 'WsAPI'
 
-export async function connectGateway(auth: AuthConfig): Promise<void> {
-  const url = import.meta.env.VITE_GATEWAY_WS_URL as string
+export async function connectGateway(url: string, auth: AuthConfig): Promise<void> {
   if (!url) {
-    const err = 'VITE_GATEWAY_WS_URL is not set'
+    const err = 'instance URL is not set'
     logger.error(TAG, err)
     throw new Error(err)
   }
-  await wsManager.connect(url, auth)
+  const wsUrl = url.replace(/^http/, 'ws')
+  await wsManager.connect(wsUrl, auth)
 }
 
 export function disconnectGateway(): void {

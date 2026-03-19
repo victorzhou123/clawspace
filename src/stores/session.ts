@@ -9,13 +9,14 @@ const TAG = 'sessionStore'
 export const useSessionStore = defineStore('session', () => {
   const sessions = ref<ChatSession[]>([])
   const loading = ref(false)
+  // 当前选中的 sessionKey
   const currentSessionId = ref<string | null>(null)
 
-  async function fetchSessions(page = 1, pageSize = 20) {
+  async function fetchSessions() {
     loading.value = true
     try {
-      const result = await sessionsList({ page, pageSize })
-      sessions.value = result.list
+      const result = await sessionsList({ limit: 50, includeDerivedTitles: true, includeLastMessage: true })
+      sessions.value = result.sessions ?? []
     } catch (e) {
       logger.error(TAG, 'fetchSessions failed', e)
       throw e
@@ -24,29 +25,28 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
-  async function deleteSession(sessionId: string) {
-    await sessionsDelete(sessionId)
-    sessions.value = sessions.value.filter(s => s.id !== sessionId)
-    if (currentSessionId.value === sessionId) currentSessionId.value = null
+  async function deleteSession(key: string) {
+    await sessionsDelete(key)
+    sessions.value = sessions.value.filter(s => s.key !== key)
+    if (currentSessionId.value === key) currentSessionId.value = null
   }
 
-  async function renameSession(sessionId: string, title: string) {
-    const updated = await sessionsPatch(sessionId, { title })
-    const idx = sessions.value.findIndex(s => s.id === sessionId)
-    if (idx !== -1) sessions.value[idx] = updated
+  async function renameSession(key: string, label: string) {
+    await sessionsPatch(key, { label })
+    const idx = sessions.value.findIndex(s => s.key === key)
+    if (idx !== -1) sessions.value[idx] = { ...sessions.value[idx], label }
   }
 
-  async function resetSession(sessionId: string) {
-    await sessionsReset(sessionId)
-    // 重置后清空本地会话条目的消息计数和预览
-    const idx = sessions.value.findIndex(s => s.id === sessionId)
+  async function resetSession(key: string) {
+    await sessionsReset(key)
+    const idx = sessions.value.findIndex(s => s.key === key)
     if (idx !== -1) {
-      sessions.value[idx] = { ...sessions.value[idx], messageCount: 0, preview: '' }
+      sessions.value[idx] = { ...sessions.value[idx], lastMessagePreview: '' }
     }
   }
 
-  function setCurrentSession(sessionId: string | null) {
-    currentSessionId.value = sessionId
+  function setCurrentSession(key: string | null) {
+    currentSessionId.value = key
   }
 
   return {

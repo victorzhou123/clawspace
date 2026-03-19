@@ -1,43 +1,11 @@
 // 认证 API
+// OpenClaw 的认证通过 WebSocket 握手（connect 方法）完成，不需要单独的 auth RPC 调用
+// 参见 src/api/websocket.ts 中的 connectGateway
 
-import { rpc } from '@/api/websocket'
 import { http } from '@/api/http'
-
-export interface LoginByTokenParams {
-  token: string
-}
-
-export interface LoginByPasswordParams {
-  username: string
-  password: string
-}
-
-export interface LoginByDeviceTokenParams {
-  deviceToken: string
-}
-
-export interface AuthResult {
-  token: string
-  expiresAt?: number
-}
-
-// Token 认证
-export function loginByToken(params: LoginByTokenParams): Promise<AuthResult> {
-  return rpc<AuthResult>('auth.login', { type: 'token', ...params })
-}
-
-// 密码认证
-// @security 密码通过 WebSocket 明文传输，需确保连接使用 WSS（生产环境必须）
-export function loginByPassword(params: LoginByPasswordParams): Promise<AuthResult> {
-  return rpc<AuthResult>('auth.login', { type: 'password', ...params })
-}
-
-// Device Token 认证
-export function loginByDeviceToken(params: LoginByDeviceTokenParams): Promise<AuthResult> {
-  return rpc<AuthResult>('auth.login', { type: 'device_token', ...params })
-}
 
 // 健康检查（用于验证连接和 token 有效性）
 export function checkHealth(): Promise<{ status: string }> {
   return http.get<{ status: string }>('/health', { skipAuth: false })
 }
+
