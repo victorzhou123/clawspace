@@ -1,6 +1,6 @@
 <template>
   <view v-if="visible" class="drawer-mask" @tap="close" />
-  <view class="drawer" :class="visible ? 'drawer-open' : 'drawer-closed'">
+  <view class="drawer" :class="[visible ? 'drawer-open' : 'drawer-closed', themeClass]">
     <view class="drawer-header">
       <view class="user-avatar">
         <text class="avatar-text">{{ userInitial }}</text>
@@ -56,6 +56,7 @@ import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/stores/user'
 import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
+import { useTheme } from '@/composables/useTheme'
 
 defineProps<{ visible: boolean }>()
 const emit = defineEmits<{ (e: 'close'): void }>()
@@ -65,6 +66,7 @@ const sessionStore = useSessionStore()
 const chatStore = useChatStore()
 const { instanceUrl } = storeToRefs(userStore)
 const { sessions, loading: sessionLoading, currentSessionId } = storeToRefs(sessionStore)
+const { themeClass } = useTheme()
 
 const userName = computed(() => {
   if (instanceUrl.value) {
@@ -155,7 +157,7 @@ function formatTime(ts: number | null): string {
   position: fixed;
   top: 0; left: 0; bottom: 0;
   width: 680rpx;
-  background: #1c1c1e;
+  background: var(--drawer-bg);
   z-index: 999;
   display: flex;
   flex-direction: column;
@@ -171,7 +173,7 @@ function formatTime(ts: number | null): string {
   align-items: center;
   gap: 20rpx;
   padding: 32rpx 32rpx 24rpx;
-  border-bottom: 1rpx solid #333;
+  border-bottom: 1rpx solid var(--border-light);
 }
 
 .user-avatar {
@@ -189,26 +191,23 @@ function formatTime(ts: number | null): string {
 .user-info {
   flex: 1;
   overflow: hidden;
-  .user-name { display: block; font-size: 28rpx; font-weight: 500; color: #fff; margin-bottom: 4rpx; }
-  .user-instance { display: block; font-size: 22rpx; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .user-name { display: block; font-size: 28rpx; font-weight: 500; color: var(--text-primary); margin-bottom: 4rpx; }
+  .user-instance { display: block; font-size: 22rpx; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
 .section-title {
   font-size: 22rpx;
-  color: #666;
+  color: var(--text-tertiary);
   padding: 20rpx 32rpx 8rpx;
   text-transform: uppercase;
   letter-spacing: 2rpx;
 }
 
-.session-list {
-  flex: 1;
-  min-height: 0;
-}
+.session-list { flex: 1; min-height: 0; }
 
 .empty-tip {
   padding: 48rpx 32rpx;
-  text { font-size: 26rpx; color: #666; }
+  text { font-size: 26rpx; color: var(--text-tertiary); }
 }
 
 .session-item {
@@ -216,21 +215,21 @@ function formatTime(ts: number | null): string {
   align-items: center;
   padding: 20rpx 32rpx;
   gap: 12rpx;
-  &:active { background: #2a2a2e; }
-  &.session-active { background: #2c2c2e; }
+  &:active { background: var(--bg-tertiary); }
+  &.session-active { background: var(--drawer-item-active); }
 }
 
 .session-item-inner {
   flex: 1;
   overflow: hidden;
-  .session-title { display: block; font-size: 28rpx; color: #e5e5e7; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 4rpx; }
-  .session-preview { display: block; font-size: 24rpx; color: #666; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .session-title { display: block; font-size: 28rpx; color: var(--text-primary); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 4rpx; }
+  .session-preview { display: block; font-size: 24rpx; color: var(--text-tertiary); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 }
 
-.session-time { font-size: 22rpx; color: #555; flex-shrink: 0; }
+.session-time { font-size: 22rpx; color: var(--text-tertiary); flex-shrink: 0; }
 
 .nav-list {
-  border-top: 1rpx solid #333;
+  border-top: 1rpx solid var(--border-light);
   padding: 12rpx 0;
   padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
 }
@@ -240,8 +239,8 @@ function formatTime(ts: number | null): string {
   align-items: center;
   gap: 20rpx;
   padding: 24rpx 32rpx;
-  &:active { background: #2a2a2e; }
+  &:active { background: var(--bg-tertiary); }
   .nav-icon { font-size: 36rpx; width: 48rpx; text-align: center; }
-  .nav-label { font-size: 30rpx; color: #e5e5e7; }
+  .nav-label { font-size: 30rpx; color: var(--text-primary); }
 }
 </style>

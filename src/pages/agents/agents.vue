@@ -1,5 +1,5 @@
 <template>
-  <view class="agents-page">
+  <view class="agents-page" :class="themeClass">
     <!-- 自定义导航栏 -->
     <view class="nav-bar">
       <view class="nav-back" @tap="() => uni.navigateBack()">
@@ -47,9 +47,11 @@ import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useAgentStore } from '@/stores/agent'
 import type { Agent } from '@/types/agent'
+import { useTheme } from '@/composables/useTheme'
 
 const agentStore = useAgentStore()
 const { agents, loading } = storeToRefs(agentStore)
+const { themeClass } = useTheme()
 
 onLoad(() => { guardAuth() })
 
@@ -90,7 +92,7 @@ function confirmDelete(agentId: string, name: string) {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f5f5f5;
+  background-color: var(--bg-primary);
 }
 
 .nav-bar {
@@ -99,15 +101,15 @@ function confirmDelete(agentId: string, name: string) {
   padding: 0 24rpx;
   padding-top: env(safe-area-inset-top);
   height: calc(88rpx + env(safe-area-inset-top));
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
+  background: var(--nav-bg);
+  border-bottom: 1rpx solid var(--nav-border);
   flex-shrink: 0;
 
   .nav-back {
     width: 60rpx;
     display: flex;
     align-items: center;
-    .nav-back-text { font-size: 56rpx; color: #007aff; line-height: 1; margin-top: -4rpx; }
+    .nav-back-text { font-size: 56rpx; color: var(--accent); line-height: 1; margin-top: -4rpx; }
   }
 
   .nav-title {
@@ -115,60 +117,46 @@ function confirmDelete(agentId: string, name: string) {
     text-align: center;
     font-size: 32rpx;
     font-weight: 500;
-    color: #1a1a1a;
+    color: var(--nav-text);
   }
 
   .create-btn {
     font-size: 28rpx;
-    color: #007aff;
+    color: var(--accent);
     width: 80rpx;
     text-align: right;
   }
 }
 
-.list {
-  flex: 1;
-}
+.list { flex: 1; }
 
 .empty {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 120rpx 0;
-
-  .empty-text {
-    font-size: 28rpx;
-    color: #999;
-  }
+  .empty-text { font-size: 28rpx; color: var(--text-tertiary); }
 }
 
 .agent-item {
   display: flex;
   align-items: center;
   padding: 24rpx 32rpx;
-  background: #fff;
-  border-bottom: 1rpx solid #f0f0f0;
-
-  &:active {
-    background: #f5f5f5;
-  }
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--border-color);
+  &:active { background: var(--bg-tertiary); }
 }
 
 .agent-avatar {
   width: 80rpx;
   height: 80rpx;
   border-radius: 20rpx;
-  background: #007aff;
+  background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-
-  .avatar-text {
-    font-size: 36rpx;
-    color: #fff;
-    font-weight: bold;
-  }
+  .avatar-text { font-size: 36rpx; color: #fff; font-weight: bold; }
 }
 
 .agent-info {
@@ -180,14 +168,14 @@ function confirmDelete(agentId: string, name: string) {
     display: block;
     font-size: 30rpx;
     font-weight: 500;
-    color: #1a1a1a;
+    color: var(--text-primary);
     margin-bottom: 6rpx;
   }
 
   .agent-desc {
     display: block;
     font-size: 26rpx;
-    color: #999;
+    color: var(--text-tertiary);
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -197,16 +185,12 @@ function confirmDelete(agentId: string, name: string) {
   .agent-model {
     display: inline-block;
     font-size: 22rpx;
-    color: #007aff;
-    background: rgba(0, 122, 255, 0.08);
+    color: var(--accent);
+    background: var(--accent-light);
     padding: 2rpx 12rpx;
     border-radius: 8rpx;
   }
 }
 
-.arrow {
-  font-size: 40rpx;
-  color: #ccc;
-  flex-shrink: 0;
-}
+.arrow { font-size: 40rpx; color: var(--text-tertiary); flex-shrink: 0; }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <view class="chat-page">
+  <view class="chat-page" :class="themeClass">
     <!-- 自定义导航栏 -->
     <view class="nav-bar">
       <view class="nav-left" @tap="openDrawer">
@@ -93,11 +93,14 @@ import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
 import MsgBubble from '@/components/MsgBubble.vue'
 import DrawerMenu from '@/components/DrawerMenu.vue'
+import { useTheme } from '@/composables/useTheme'
 
 const sessionStore = useSessionStore()
 const chatStore = useChatStore()
 const { currentSessionId, sessions } = storeToRefs(sessionStore)
 const { messages, sending, streaming, hasMore } = storeToRefs(chatStore)
+
+const { themeClass } = useTheme()
 
 const inputText = ref('')
 const scrollAnchor = ref('msg-bottom')
@@ -233,18 +236,17 @@ async function onAbort() {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #111;
+  background-color: var(--bg-primary);
 }
 
 .nav-bar {
   display: flex;
   align-items: center;
-  height: 88rpx;
   padding: 0 24rpx;
   padding-top: env(safe-area-inset-top);
   height: calc(88rpx + env(safe-area-inset-top));
-  background: #1c1c1e;
-  border-bottom: 1rpx solid #2c2c2e;
+  background: var(--nav-bg);
+  border-bottom: 1rpx solid var(--nav-border);
   flex-shrink: 0;
 }
 
@@ -259,7 +261,7 @@ async function onAbort() {
   text-align: center;
   font-size: 32rpx;
   font-weight: 500;
-  color: #e5e5e7;
+  color: var(--nav-text);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -270,12 +272,11 @@ async function onAbort() {
   flex-direction: column;
   gap: 10rpx;
   padding: 8rpx;
-  cursor: pointer;
 
   .bar {
     width: 44rpx;
     height: 4rpx;
-    background: #e5e5e7;
+    background: var(--nav-text);
     border-radius: 2rpx;
   }
 }
@@ -286,26 +287,17 @@ async function onAbort() {
   align-items: center;
   justify-content: center;
 
-  .no-session-text {
-    font-size: 28rpx;
-    color: #666;
-  }
+  .no-session-text { font-size: 28rpx; color: var(--text-tertiary); }
 }
 
-.message-list {
-  flex: 1;
-  min-height: 0;
-}
-
-.message-list-inner {
-  padding: 16rpx 0 8rpx;
-}
+.message-list { flex: 1; min-height: 0; }
+.message-list-inner { padding: 16rpx 0 8rpx; }
 
 .load-more-tip {
   text-align: center;
   padding: 16rpx;
   font-size: 24rpx;
-  color: #666;
+  color: var(--text-tertiary);
 }
 
 .empty-chat {
@@ -313,14 +305,12 @@ async function onAbort() {
   align-items: center;
   justify-content: center;
   padding: 80rpx 0;
-
-  .empty-chat-text { font-size: 28rpx; color: #666; }
+  .empty-chat-text { font-size: 28rpx; color: var(--text-tertiary); }
 }
 
 .bubble-row {
   display: flex;
   padding: 8rpx 24rpx;
-
   &.row-user { justify-content: flex-end; }
   &.row-assistant { justify-content: flex-start; }
 }
@@ -331,8 +321,8 @@ async function onAbort() {
   gap: 16rpx;
   padding: 16rpx 24rpx;
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
-  background: #1c1c1e;
-  border-top: 1rpx solid #2c2c2e;
+  background: var(--nav-bg);
+  border-top: 1rpx solid var(--nav-border);
   flex-shrink: 0;
 }
 
@@ -340,12 +330,12 @@ async function onAbort() {
   flex: 1;
   min-height: 72rpx;
   max-height: 200rpx;
-  background: #2c2c2e;
+  background: var(--input-bg);
   border-radius: 16rpx;
   padding: 16rpx 20rpx;
   font-size: 30rpx;
   line-height: 1.5;
-  color: #e5e5e7;
+  color: var(--input-text);
 }
 
 .btn-action {
@@ -360,13 +350,13 @@ async function onAbort() {
 }
 
 .btn-send {
-  background: #007aff;
+  background: var(--accent);
   color: #fff;
   &[disabled] { opacity: 0.4; }
 }
 
 .btn-abort {
-  background: #ff4d4f;
+  background: var(--danger);
   color: #fff;
 }
 </style>

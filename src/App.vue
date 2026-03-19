@@ -6,7 +6,6 @@ import { WHITE_LIST } from "@/utils/guard";
 onLaunch(async () => {
   const userStore = useUserStore();
 
-  // 拦截导航，未登录时重定向到登录页（防止闪屏）
   const checkAuth = (options: { url: string }) => {
     const path = options.url.split("?")[0];
     if (WHITE_LIST.includes(path)) return true;
@@ -23,4 +22,10 @@ onLaunch(async () => {
 onShow(() => {});
 onHide(() => {});
 </script>
-<style></style>
+<style lang="scss">
+@import '@/styles/theme.scss';
+
+page {
+  background-color: var(--bg-primary, #111111);
+}
+</style>

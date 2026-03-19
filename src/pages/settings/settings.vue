@@ -1,5 +1,5 @@
 <template>
-  <view class="settings-page">
+  <view class="settings-page" :class="themeClass">
     <!-- 自定义导航栏 -->
     <view class="nav-bar">
       <view class="nav-back" @tap="() => uni.navigateBack()">
@@ -24,6 +24,10 @@
       <!-- 设置项 -->
       <view class="section">
         <view class="section-title">通用</view>
+        <view class="item" @tap="toggleTheme">
+          <text class="item-label">外观</text>
+          <text class="item-value">{{ theme === 'dark' ? '暗黑' : '明亮' }}</text>
+        </view>
         <view class="item" @tap="clearCache">
           <text class="item-label">清除缓存</text>
           <text class="item-value">{{ cacheSize }}</text>
@@ -68,9 +72,11 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useUserStore } from '@/stores/user'
+import { useTheme } from '@/composables/useTheme'
 
 const userStore = useUserStore()
 const { instanceUrl } = storeToRefs(userStore)
+const { themeClass, theme, toggle: toggleTheme } = useTheme()
 
 const version = ref((() => {
   try { return uni.getSystemInfoSync().appVersion || '1.0.0' } catch { return '1.0.0' }
@@ -168,7 +174,7 @@ function confirmLogout() {
 <style scoped lang="scss">
 .settings-page {
   height: 100vh;
-  background: #f5f5f5;
+  background: var(--bg-primary);
   display: flex;
   flex-direction: column;
 }
@@ -179,15 +185,15 @@ function confirmLogout() {
   padding: 0 24rpx;
   padding-top: env(safe-area-inset-top);
   height: calc(88rpx + env(safe-area-inset-top));
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
+  background: var(--nav-bg);
+  border-bottom: 1rpx solid var(--nav-border);
   flex-shrink: 0;
 
   .nav-back {
     width: 60rpx;
     display: flex;
     align-items: center;
-    .nav-back-text { font-size: 56rpx; color: #007aff; line-height: 1; margin-top: -4rpx; }
+    .nav-back-text { font-size: 56rpx; color: var(--accent); line-height: 1; margin-top: -4rpx; }
   }
 
   .nav-title {
@@ -195,26 +201,20 @@ function confirmLogout() {
     text-align: center;
     font-size: 32rpx;
     font-weight: 500;
-    color: #1a1a1a;
+    color: var(--nav-text);
   }
 }
 
-.content {
-  flex: 1;
-}
+.content { flex: 1; }
 
 .card {
   margin: 24rpx;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   padding: 32rpx;
 }
 
-.user-card {
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-}
+.user-card { display: flex; align-items: center; gap: 24rpx; }
 
 .user-avatar {
   width: 100rpx;
@@ -225,12 +225,7 @@ function confirmLogout() {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-
-  .avatar-text {
-    font-size: 44rpx;
-    color: #fff;
-    font-weight: bold;
-  }
+  .avatar-text { font-size: 44rpx; color: #fff; font-weight: bold; }
 }
 
 .user-info {
@@ -238,38 +233,17 @@ function confirmLogout() {
   display: flex;
   flex-direction: column;
   gap: 8rpx;
-
-  .user-name {
-    font-size: 32rpx;
-    font-weight: 500;
-    color: #1a1a1a;
-  }
-
-  .user-status {
-    font-size: 26rpx;
-    color: #52c41a;
-  }
-
-  .user-instance {
-    font-size: 22rpx;
-    color: #999;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  .user-name { font-size: 32rpx; font-weight: 500; color: var(--text-primary); }
+  .user-status { font-size: 26rpx; color: var(--success); }
+  .user-instance { font-size: 22rpx; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
 .section {
   margin: 24rpx;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   overflow: hidden;
-
-  .section-title {
-    padding: 24rpx 32rpx 16rpx;
-    font-size: 26rpx;
-    color: #999;
-  }
+  .section-title { padding: 24rpx 32rpx 16rpx; font-size: 26rpx; color: var(--text-tertiary); }
 }
 
 .item {
@@ -277,47 +251,24 @@ function confirmLogout() {
   align-items: center;
   justify-content: space-between;
   padding: 28rpx 32rpx;
-  border-top: 1rpx solid #f0f0f0;
-
-  &:first-of-type {
-    border-top: none;
-  }
-
-  &:active {
-    background: #f5f5f5;
-  }
-
-  .item-label {
-    font-size: 30rpx;
-    color: #1a1a1a;
-  }
-
-  .item-value {
-    font-size: 28rpx;
-    color: #999;
-  }
-
-  .arrow {
-    font-size: 40rpx;
-    color: #ccc;
-  }
+  border-top: 1rpx solid var(--border-color);
+  &:first-of-type { border-top: none; }
+  &:active { background: var(--bg-tertiary); }
+  .item-label { font-size: 30rpx; color: var(--text-primary); }
+  .item-value { font-size: 28rpx; color: var(--text-tertiary); }
+  .arrow { font-size: 40rpx; color: var(--text-tertiary); }
 }
 
-.logout-section {
-  margin: 48rpx 24rpx 24rpx;
-}
+.logout-section { margin: 48rpx 24rpx 24rpx; }
 
 .btn-logout {
   width: 100%;
   height: 88rpx;
-  background: #fff;
-  color: #ff4d4f;
+  background: var(--bg-card);
+  color: var(--danger);
   border-radius: 20rpx;
   font-size: 32rpx;
   border: none;
-
-  &:active {
-    opacity: 0.8;
-  }
+  &:active { opacity: 0.8; }
 }
 </style>
