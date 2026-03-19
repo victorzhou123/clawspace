@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
-export const INSTANCE_URL = 'http://192.168.22.177:18789';
-export const TOKEN = '88dd04e7d0bcf9395c78300458f57740c72c2b24ec2c9289';
+export const INSTANCE_URL = process.env.E2E_URL ?? 'ws://192.168.22.177:18789';
+export const TOKEN = process.env.E2E_TOKEN ?? '88dd04e7d0bcf9395c78300458f57740c72c2b24ec2c9289';
 
 export async function login(page: Page) {
   await page.goto('/');

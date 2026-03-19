@@ -144,9 +144,17 @@ function scrollToBottom() {
 async function onLoadMore() {
   const sessionId = sessionStore.currentSessionId
   if (!sessionId || loadingMore.value || !hasMore.value) return
+  // 记录加载前第一条消息 id，加载后定位回去
+  const firstMsgId = messages.value[0]?.id
   loadingMore.value = true
   try {
     await chatStore.loadMore(sessionId)
+    if (firstMsgId) {
+      nextTick(() => {
+        scrollAnchor.value = ''
+        nextTick(() => { scrollAnchor.value = `msg-${firstMsgId}` })
+      })
+    }
   } catch {
     uni.showToast({ title: '加载失败', icon: 'none' })
   } finally {
