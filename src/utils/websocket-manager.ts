@@ -248,7 +248,7 @@ export class WebSocketManager {
   private _startHeartbeat(): void {
     this._stopHeartbeat()
     this.heartbeatTimer = setInterval(() => {
-      this._send({ type: 'ping' })
+      this._call('heartbeat', {}).catch(() => {})
     }, HEARTBEAT_INTERVAL)
   }
 
