@@ -104,9 +104,13 @@ function clearCache() {
     content: '将清除本地缓存数据（不包括登录信息），确认清除？',
     success: (res) => {
       if (res.confirm) {
-        storage.remove('sessions')
-        storage.remove('agents')
-        storage.remove('chat')
+        try {
+          const info = uni.getStorageInfoSync()
+          const keepKeys = new Set(['auth_token', 'instance_url', 'user'])
+          info.keys.forEach(key => {
+            if (!keepKeys.has(key)) uni.removeStorageSync(key)
+          })
+        } catch { /* ignore */ }
         calculateCacheSize()
         uni.showToast({ title: '已清除', icon: 'success' })
       }
