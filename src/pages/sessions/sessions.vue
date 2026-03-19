@@ -13,18 +13,17 @@
 
       <view
         v-for="session in sessions"
-        :key="session.id"
+        :key="session.key"
         class="session-item"
-        @tap="openSession(session.id)"
-        @longpress="onLongPress(session.id, session.title)"
+        @tap="openSession(session.key)"
+        @longpress="onLongPress(session.key, session.label || session.derivedTitle || '')"
       >
         <view class="session-info">
-          <text class="session-title">{{ session.title || '新会话' }}</text>
-          <text class="session-preview">{{ session.preview || '暂无消息' }}</text>
+          <text class="session-title">{{ session.label || session.derivedTitle || session.displayName || session.key }}</text>
+          <text class="session-preview">{{ session.lastMessagePreview || '暂无消息' }}</text>
         </view>
         <view class="session-meta">
           <text class="session-time">{{ formatTime(session.updatedAt) }}</text>
-          <text class="session-count">{{ session.messageCount }} 条</text>
         </view>
       </view>
     </scroll-view>
@@ -45,7 +44,6 @@ const { sessions, loading } = storeToRefs(sessionStore)
 onLoad(() => { guardAuth() })
 
 onShow(async () => {
-  // 每次进入都刷新，保证数据新鲜度
   await sessionStore.fetchSessions().catch(() => {})
 })
 
@@ -53,44 +51,43 @@ async function onRefresh() {
   await sessionStore.fetchSessions().catch(() => {})
 }
 
-function openSession(sessionId: string) {
-  sessionStore.setCurrentSession(sessionId)
+function openSession(key: string) {
+  sessionStore.setCurrentSession(key)
   uni.switchTab({ url: '/pages/chat/chat' })
 }
 
-function onLongPress(sessionId: string, title: string) {
+function onLongPress(key: string, title: string) {
   uni.showActionSheet({
     itemList: ['重命名', '重置会话', '删除会话'],
     success: ({ tapIndex }) => {
-      if (tapIndex === 0) confirmRename(sessionId, title)
-      else if (tapIndex === 1) confirmReset(sessionId)
-      else if (tapIndex === 2) confirmDelete(sessionId)
+      if (tapIndex === 0) confirmRename(key, title)
+      else if (tapIndex === 1) confirmReset(key)
+      else if (tapIndex === 2) confirmDelete(key)
     },
   })
 }
 
-function confirmRename(sessionId: string, currentTitle: string) {
+function confirmRename(key: string, currentTitle: string) {
   uni.showModal({
     title: '重命名',
     editable: true,
     placeholderText: currentTitle || '新会话',
     success: async (res) => {
       if (res.confirm && res.content?.trim()) {
-        await sessionStore.renameSession(sessionId, res.content.trim()).catch(() => {})
+        await sessionStore.renameSession(key, res.content.trim()).catch(() => {})
       }
     },
   })
 }
 
-function confirmReset(sessionId: string) {
+function confirmReset(key: string) {
   uni.showModal({
     title: '重置会话',
     content: '将清空该会话的所有消息，确认重置？',
     success: async (res) => {
       if (res.confirm) {
-        await sessionStore.resetSession(sessionId).catch(() => {})
-        // 若重置的是当前会话，同步清空聊天消息
-        if (sessionStore.currentSessionId === sessionId) {
+        await sessionStore.resetSession(key).catch(() => {})
+        if (sessionStore.currentSessionId === key) {
           chatStore.clearMessages()
         }
       }
@@ -98,19 +95,20 @@ function confirmReset(sessionId: string) {
   })
 }
 
-function confirmDelete(sessionId: string) {
+function confirmDelete(key: string) {
   uni.showModal({
     title: '删除会话',
     content: '删除后无法恢复，确认删除？',
     success: async (res) => {
       if (res.confirm) {
-        await sessionStore.deleteSession(sessionId).catch(() => {})
+        await sessionStore.deleteSession(key).catch(() => {})
       }
     },
   })
 }
 
-function formatTime(ts: number): string {
+function formatTime(ts: number | null): string {
+  if (!ts) return ''
   const d = new Date(ts)
   const now = new Date()
   if (d.toDateString() === now.toDateString()) {
@@ -191,12 +189,6 @@ function formatTime(ts: number): string {
   .session-time {
     font-size: 24rpx;
     color: #bbb;
-    margin-bottom: 8rpx;
-  }
-
-  .session-count {
-    font-size: 22rpx;
-    color: #ccc;
   }
 }
 </style>
