@@ -49,6 +49,13 @@
 			}
 		},
 		{
+			"path": "pages/monitor/monitor",
+			"style": {
+				"navigationBarTitleText": "系统状态",
+				"navigationBarBackButtonText": "返回"
+			}
+		},
+		{
 			"path": "pages/auth/login",
 			"style": {
 				"navigationBarTitleText": "登录",

@@ -23,6 +23,10 @@
           <text class="item-label">工具目录</text>
           <text class="arrow">›</text>
         </view>
+        <view class="item" @tap="goMonitor">
+          <text class="item-label">系统状态</text>
+          <text class="arrow">›</text>
+        </view>
       </view>
 
       <view class="section">
@@ -116,6 +120,10 @@ function clearCache() {
       }
     },
   })
+}
+
+function goMonitor() {
+  uni.navigateTo({ url: '/pages/monitor/monitor' })
 }
 
 function goTools() {
