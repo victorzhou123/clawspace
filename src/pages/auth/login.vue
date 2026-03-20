@@ -1,7 +1,7 @@
 <template>
   <view class="login-page" :class="themeClass">
     <view class="login-header">
-      <text class="app-name">ClawSpace</text>
+      <text class="app-name">clawspace</text>
       <text class="app-desc">OpenClaw AI Assistant</text>
     </view>
 

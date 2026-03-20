@@ -10,7 +10,7 @@
         </view>
       </view>
       <view class="nav-center">
-        <text class="nav-title">{{ currentSessionTitle || 'ClawSpace' }}</text>
+        <text class="nav-title">{{ currentSessionTitle || 'clawspace' }}</text>
         <text v-if="streaming" class="nav-typing">{{ typingText }}</text>
       </view>
       <view class="nav-right" />

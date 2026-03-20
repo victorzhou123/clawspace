@@ -5,7 +5,7 @@ test.describe('登录模块', () => {
 
   test('01 - 页面加载和路由', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('text=ClawSpace')).toBeVisible();
+    await expect(page.locator('text=clawspace')).toBeVisible();
     await expect(page.locator('text=OpenClaw AI Assistant')).toBeVisible();
   });
 
@@ -96,7 +96,7 @@ test.describe('登录模块', () => {
 
   test('12 - 样式和布局完整性', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('.app-name')).toHaveText('ClawSpace');
+    await expect(page.locator('.app-name')).toHaveText('clawspace');
     await expect(page.locator('.app-desc')).toHaveText('OpenClaw AI Assistant');
     await expect(page.locator('.btn-primary')).toHaveCSS('background', /rgb\(0, 122, 255\)/);
   });

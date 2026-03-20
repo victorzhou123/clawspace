@@ -1,5 +1,5 @@
 {
-    "name" : "ClawSpace",
+    "name" : "clawspace",
     "appid" : "__UNI__CLAWSPACE",
     "description" : "OpenClaw AI Assistant Mobile App",
     "versionName" : "1.0.0",
@@ -29,7 +29,7 @@
     },
     /* H5特有相关 */
     "h5" : {
-        "title" : "ClawSpace",
+        "title" : "clawspace",
         "router" : {
             "mode" : "history"
         }
