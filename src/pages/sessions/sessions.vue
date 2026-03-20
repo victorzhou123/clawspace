@@ -1,5 +1,12 @@
 <template>
-  <view class="sessions-page">
+  <view class="sessions-page" :class="themeClass">
+    <view class="nav-bar">
+      <view class="nav-back" @tap="() => uni.navigateBack()">
+        <text class="nav-back-text">‹</text>
+      </view>
+      <text class="nav-title">会话列表</text>
+      <view style="width: 60rpx;" />
+    </view>
     <scroll-view
       class="list"
       scroll-y
@@ -16,10 +23,10 @@
         :key="session.key"
         class="session-item"
         @tap="openSession(session.key)"
-        @longpress="onLongPress(session.key, session.label || session.derivedTitle || '')"
+        @longpress="onLongPress(session.key, session.key || session.label || session.derivedTitle || '')"
       >
         <view class="session-info">
-          <text class="session-title">{{ session.label || session.derivedTitle || session.displayName || session.key }}</text>
+          <text class="session-title">{{ session.key || session.label || session.derivedTitle || session.displayName }}</text>
           <text class="session-preview">{{ session.lastMessagePreview || '暂无消息' }}</text>
         </view>
         <view class="session-meta">
@@ -36,10 +43,12 @@ import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
+import { useTheme } from '@/composables/useTheme'
 
 const sessionStore = useSessionStore()
 const chatStore = useChatStore()
 const { sessions, loading } = storeToRefs(sessionStore)
+const { themeClass } = useTheme()
 
 onLoad(() => { guardAuth() })
 
@@ -123,7 +132,33 @@ function formatTime(ts: number | null): string {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f5f5f5;
+  background-color: var(--bg-primary);
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  padding-top: env(safe-area-inset-top);
+  height: calc(88rpx + env(safe-area-inset-top));
+  background: var(--nav-bg);
+  border-bottom: 1rpx solid var(--nav-border);
+  flex-shrink: 0;
+
+  .nav-back {
+    width: 60rpx;
+    display: flex;
+    align-items: center;
+    .nav-back-text { font-size: 56rpx; color: var(--accent); line-height: 1; margin-top: -4rpx; }
+  }
+
+  .nav-title {
+    flex: 1;
+    text-align: center;
+    font-size: 32rpx;
+    font-weight: 500;
+    color: var(--nav-text);
+  }
 }
 
 .list {
@@ -138,7 +173,7 @@ function formatTime(ts: number | null): string {
 
   .empty-text {
     font-size: 28rpx;
-    color: #999;
+    color: var(--text-tertiary);
   }
 }
 
@@ -146,11 +181,11 @@ function formatTime(ts: number | null): string {
   display: flex;
   align-items: center;
   padding: 28rpx 32rpx;
-  background: #fff;
-  border-bottom: 1rpx solid #f0f0f0;
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--border-color);
 
   &:active {
-    background: #f5f5f5;
+    background: var(--bg-tertiary);
   }
 }
 
@@ -162,7 +197,7 @@ function formatTime(ts: number | null): string {
     display: block;
     font-size: 30rpx;
     font-weight: 500;
-    color: #1a1a1a;
+    color: var(--text-primary);
     margin-bottom: 8rpx;
     overflow: hidden;
     white-space: nowrap;
@@ -172,7 +207,7 @@ function formatTime(ts: number | null): string {
   .session-preview {
     display: block;
     font-size: 26rpx;
-    color: #999;
+    color: var(--text-tertiary);
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -188,7 +223,7 @@ function formatTime(ts: number | null): string {
 
   .session-time {
     font-size: 24rpx;
-    color: #bbb;
+    color: var(--text-tertiary);
   }
 }
 </style>

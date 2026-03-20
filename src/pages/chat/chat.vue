@@ -9,7 +9,10 @@
           <view class="bar" />
         </view>
       </view>
-      <text class="nav-title">{{ currentSessionTitle || 'ClawSpace' }}</text>
+      <view class="nav-center">
+        <text class="nav-title">{{ currentSessionTitle || 'ClawSpace' }}</text>
+        <text v-if="streaming" class="nav-typing">{{ typingText }}</text>
+      </view>
       <view class="nav-right" />
     </view>
 
@@ -85,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
 import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
@@ -109,10 +112,41 @@ const loadingMore = ref(false)
 const drawerOpen = ref(false)
 let unsubscribeFn: (() => void) | null = null
 
+// 正在思考动画
+const typingText = ref('')
+let typingTimer: ReturnType<typeof setInterval> | null = null
+const TYPING_FRAMES = ['正在思考.', '正在思考..', '正在思考...']
+
+function startTyping() {
+  if (typingTimer) return
+  let i = 0
+  typingText.value = TYPING_FRAMES[0]
+  typingTimer = setInterval(() => {
+    i = (i + 1) % TYPING_FRAMES.length
+    typingText.value = TYPING_FRAMES[i]
+  }, 500)
+}
+
+function stopTyping() {
+  if (typingTimer) {
+    clearInterval(typingTimer)
+    typingTimer = null
+  }
+  typingText.value = ''
+}
+
+// sending 变为 true 时立即启动，sending 和 streaming 都为 false 时停止
+watch(
+  () => sending.value || streaming.value,
+  (active) => { active ? startTyping() : stopTyping() }
+)
+
+onUnmounted(() => { stopTyping() })
+
 const currentSessionTitle = computed(() => {
   if (!currentSessionId.value) return ''
   const s = sessions.value.find(s => s.key === currentSessionId.value)
-  return s?.label || s?.derivedTitle || s?.displayName || currentSessionId.value
+  return s?.key || s?.label || s?.derivedTitle || s?.displayName || currentSessionId.value
 })
 
 onLoad(() => { guardAuth() })
@@ -161,7 +195,7 @@ watch(currentSessionId, async (sessionId) => {
 
 onUnload(() => { unsubscribeFn?.() })
 
-watch(() => messages.value.length, () => scrollToBottom())
+watch(() => messages.value.length, (len) => { if (len > 0) scrollToBottom() })
 
 let scrollTimer: ReturnType<typeof setTimeout> | null = null
 watch(
@@ -180,6 +214,7 @@ watch(
 )
 
 function scrollToBottom() {
+  if (!currentSessionId.value) return
   nextTick(() => {
     scrollAnchor.value = ''
     nextTick(() => { scrollAnchor.value = 'msg-bottom' })

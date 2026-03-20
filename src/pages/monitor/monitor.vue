@@ -1,5 +1,12 @@
 <template>
-  <view class="monitor-page">
+  <view class="monitor-page" :class="themeClass">
+    <view class="nav-bar">
+      <view class="nav-back" @tap="() => uni.navigateBack()">
+        <text class="nav-back-text">‹</text>
+      </view>
+      <text class="nav-title">系统状态</text>
+      <view style="width: 60rpx;" />
+    </view>
     <scroll-view
       scroll-y
       class="content"
@@ -111,9 +118,11 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useMonitorStore } from '@/stores/monitor'
+import { useTheme } from '@/composables/useTheme'
 
 const monitorStore = useMonitorStore()
 const { healthData, statusData, usageData, loading } = storeToRefs(monitorStore)
+const { themeClass } = useTheme()
 
 const healthOk = computed(() => healthData.value?.ok === true)
 const healthTime = computed(() => {
@@ -148,11 +157,39 @@ function progressColor(pct: number) {
 <style scoped lang="scss">
 .monitor-page {
   height: 100vh;
-  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  padding-top: env(safe-area-inset-top);
+  height: calc(88rpx + env(safe-area-inset-top));
+  background: var(--nav-bg);
+  border-bottom: 1rpx solid var(--nav-border);
+  flex-shrink: 0;
+
+  .nav-back {
+    width: 60rpx;
+    display: flex;
+    align-items: center;
+    .nav-back-text { font-size: 56rpx; color: var(--accent); line-height: 1; margin-top: -4rpx; }
+  }
+
+  .nav-title {
+    flex: 1;
+    text-align: center;
+    font-size: 32rpx;
+    font-weight: 500;
+    color: var(--nav-text);
+  }
 }
 
 .content {
-  height: 100%;
+  flex: 1;
 }
 
 .section {
@@ -162,13 +199,13 @@ function progressColor(pct: number) {
 .section-title {
   display: block;
   font-size: 26rpx;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 12rpx;
   padding-left: 4rpx;
 }
 
 .card {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   padding: 24rpx 32rpx;
   margin-bottom: 16rpx;
@@ -177,7 +214,7 @@ function progressColor(pct: number) {
 .card-subtitle {
   display: block;
   font-size: 26rpx;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 16rpx;
 }
 
@@ -199,13 +236,13 @@ function progressColor(pct: number) {
 
 .status-text {
   font-size: 30rpx;
-  color: #1a1a1a;
+  color: var(--text-primary);
   flex: 1;
 }
 
 .status-time {
   font-size: 24rpx;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .provider-header {
@@ -217,22 +254,22 @@ function progressColor(pct: number) {
 
 .provider-name {
   font-size: 30rpx;
-  color: #1a1a1a;
+  color: var(--text-primary);
   font-weight: 500;
   flex: 1;
 }
 
 .provider-plan {
   font-size: 22rpx;
-  color: #007aff;
-  background: rgba(0, 122, 255, 0.1);
+  color: var(--accent);
+  background: var(--accent-light);
   padding: 2rpx 10rpx;
   border-radius: 6rpx;
 }
 
 .provider-error {
   font-size: 22rpx;
-  color: #ff4d4f;
+  color: var(--danger);
 }
 
 .usage-row {
@@ -246,7 +283,7 @@ function progressColor(pct: number) {
 
 .usage-label {
   font-size: 26rpx;
-  color: #666;
+  color: var(--text-secondary);
   width: 120rpx;
   flex-shrink: 0;
 }
@@ -254,7 +291,7 @@ function progressColor(pct: number) {
 .progress-bar {
   flex: 1;
   height: 12rpx;
-  background: #f0f0f0;
+  background: var(--bg-tertiary);
   border-radius: 6rpx;
   overflow: hidden;
 }
@@ -267,7 +304,7 @@ function progressColor(pct: number) {
 
 .usage-pct {
   font-size: 24rpx;
-  color: #666;
+  color: var(--text-secondary);
   width: 80rpx;
   text-align: right;
   flex-shrink: 0;
@@ -278,26 +315,26 @@ function progressColor(pct: number) {
   align-items: center;
   justify-content: space-between;
   padding: 16rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid var(--border-color);
 
   &:last-child { border-bottom: none; }
 }
 
 .info-label {
   font-size: 28rpx;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .info-value {
   font-size: 28rpx;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .session-row {
   display: flex;
   align-items: center;
   padding: 16rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid var(--border-color);
 
   &:last-child { border-bottom: none; }
 }
@@ -308,13 +345,13 @@ function progressColor(pct: number) {
   .session-key {
     display: block;
     font-size: 28rpx;
-    color: #1a1a1a;
+    color: var(--text-primary);
   }
 
   .session-model {
     display: block;
     font-size: 24rpx;
-    color: #999;
+    color: var(--text-tertiary);
     margin-top: 4rpx;
   }
 }
@@ -327,7 +364,7 @@ function progressColor(pct: number) {
 .pct-ok { font-size: 26rpx; color: #52c41a; }
 .pct-warn { font-size: 26rpx; color: #ff4d4f; }
 .text-ok { color: #52c41a; }
-.text-muted { color: #999; }
+.text-muted { color: var(--text-tertiary); }
 
 .bottom-pad { height: 40rpx; }
 </style>

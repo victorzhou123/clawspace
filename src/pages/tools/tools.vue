@@ -1,5 +1,12 @@
 <template>
-  <view class="tools-page">
+  <view class="tools-page" :class="themeClass">
+    <view class="nav-bar">
+      <view class="nav-back" @tap="() => uni.navigateBack()">
+        <text class="nav-back-text">‹</text>
+      </view>
+      <text class="nav-title">工具目录</text>
+      <view style="width: 60rpx;" />
+    </view>
     <scroll-view
       scroll-y
       class="content"
@@ -38,9 +45,11 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useToolsStore } from '@/stores/tools'
+import { useTheme } from '@/composables/useTheme'
 
 const toolsStore = useToolsStore()
 const { groups, loading } = storeToRefs(toolsStore)
+const { themeClass } = useTheme()
 
 onLoad(() => { guardAuth() })
 
@@ -58,11 +67,39 @@ async function onRefresh() {
 <style scoped lang="scss">
 .tools-page {
   height: 100vh;
-  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  padding-top: env(safe-area-inset-top);
+  height: calc(88rpx + env(safe-area-inset-top));
+  background: var(--nav-bg);
+  border-bottom: 1rpx solid var(--nav-border);
+  flex-shrink: 0;
+
+  .nav-back {
+    width: 60rpx;
+    display: flex;
+    align-items: center;
+    .nav-back-text { font-size: 56rpx; color: var(--accent); line-height: 1; margin-top: -4rpx; }
+  }
+
+  .nav-title {
+    flex: 1;
+    text-align: center;
+    font-size: 32rpx;
+    font-weight: 500;
+    color: var(--nav-text);
+  }
 }
 
 .content {
-  height: 100%;
+  flex: 1;
 }
 
 .empty {
@@ -73,13 +110,13 @@ async function onRefresh() {
 
   .empty-text {
     font-size: 28rpx;
-    color: #999;
+    color: var(--text-tertiary);
   }
 }
 
 .group {
   margin: 24rpx 24rpx 0;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   overflow: hidden;
 
@@ -93,11 +130,11 @@ async function onRefresh() {
   align-items: center;
   gap: 12rpx;
   padding: 24rpx 32rpx 16rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid var(--border-color);
 
   .group-label {
     font-size: 26rpx;
-    color: #999;
+    color: var(--text-tertiary);
     font-weight: 500;
   }
 }
@@ -114,7 +151,7 @@ async function onRefresh() {
   display: flex;
   align-items: center;
   padding: 24rpx 32rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid var(--border-color);
 
   &:last-child {
     border-bottom: none;
@@ -127,14 +164,14 @@ async function onRefresh() {
   .tool-name {
     display: block;
     font-size: 30rpx;
-    color: #1a1a1a;
+    color: var(--text-primary);
     margin-bottom: 6rpx;
   }
 
   .tool-desc {
     display: block;
     font-size: 24rpx;
-    color: #999;
+    color: var(--text-tertiary);
     line-height: 1.5;
   }
 }
