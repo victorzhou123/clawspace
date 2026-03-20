@@ -20,10 +20,10 @@
         v-for="s in sessions" :key="s.key"
         class="session-item" :class="s.key === currentSessionId ? 'session-active' : ''"
         @tap="selectSession(s.key)"
-        @longpress="onSessionLongPress(s.key, s.label || s.derivedTitle || '')"
+        @longpress="onSessionLongPress(s.key, s.key || s.label || s.derivedTitle || '')"
       >
         <view class="session-item-inner">
-          <text class="session-title">{{ s.label || s.derivedTitle || s.displayName || s.key }}</text>
+          <text class="session-title">{{ s.key || s.label || s.derivedTitle || s.displayName }}</text>
           <text class="session-preview">{{ s.lastMessagePreview || '暂无消息' }}</text>
         </view>
         <text class="session-time">{{ formatTime(s.updatedAt) }}</text>
@@ -67,6 +67,7 @@ const chatStore = useChatStore()
 const { instanceUrl } = storeToRefs(userStore)
 const { sessions, loading: sessionLoading, currentSessionId } = storeToRefs(sessionStore)
 const { themeClass } = useTheme()
+
 
 const userName = computed(() => {
   if (instanceUrl.value) {
@@ -215,6 +216,7 @@ function formatTime(ts: number | null): string {
   align-items: center;
   padding: 20rpx 32rpx;
   gap: 12rpx;
+  border-bottom: 1rpx solid var(--drawer-divider);
   &:active { background: var(--bg-tertiary); }
   &.session-active { background: var(--drawer-item-active); }
 }

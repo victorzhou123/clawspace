@@ -41,15 +41,15 @@ const htmlContent = computed(() => {
 }
 
 .bubble-user {
-  background: #007aff;
-  color: #fff;
+  background: var(--bubble-user-bg, #1a4fa3);
+  color: var(--bubble-user-text, #ffffff);
   border-bottom-right-radius: 4rpx;
   align-self: flex-end;
 }
 
 .bubble-assistant {
-  background: #fff;
-  color: #1a1a1a;
+  background: var(--bubble-assistant-bg, #2c2c2e);
+  color: var(--bubble-assistant-text, #e5e5e7);
   border-bottom-left-radius: 4rpx;
   align-self: flex-start;
 }
