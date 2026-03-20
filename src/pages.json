@@ -30,57 +30,49 @@
 		{
 			"path": "pages/agents/form",
 			"style": {
-				"navigationBarTitleText": "Agent",
-				"navigationBarBackButtonText": "返回"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/agents/detail",
 			"style": {
-				"navigationBarTitleText": "Agent 详情",
-				"navigationBarBackButtonText": "返回"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/agents/files",
 			"style": {
-				"navigationBarTitleText": "Agent 文件",
-				"navigationBarBackButtonText": "返回"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/tools/tools",
 			"style": {
-				"navigationBarTitleText": "工具目录",
-				"navigationBarBackButtonText": "返回"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/cron/list",
 			"style": {
-				"navigationBarTitleText": "定时任务",
-				"navigationBarBackButtonText": "返回"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/cron/detail",
 			"style": {
-				"navigationBarTitleText": "任务详情",
-				"navigationBarBackButtonText": "返回"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/cron/form",
 			"style": {
-				"navigationBarTitleText": "新建任务",
-				"navigationBarBackButtonText": "返回"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/monitor/monitor",
 			"style": {
-				"navigationBarTitleText": "系统状态",
-				"navigationBarBackButtonText": "返回"
+				"navigationStyle": "custom"
 			}
 		},
 		{

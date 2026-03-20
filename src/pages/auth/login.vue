@@ -1,5 +1,5 @@
 <template>
-  <view class="login-page">
+  <view class="login-page" :class="themeClass">
     <view class="login-header">
       <text class="app-name">ClawSpace</text>
       <text class="app-desc">OpenClaw AI Assistant</text>
@@ -33,8 +33,10 @@
 import { ref, reactive } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'
+import { useTheme } from '@/composables/useTheme'
 
 const userStore = useUserStore()
+const { themeClass } = useTheme()
 
 const loading = ref(false)
 const errorMsg = ref('')
@@ -77,7 +79,7 @@ async function handleLogin() {
     if (redirectUrl) {
       uni.navigateTo({ url: redirectUrl })
     } else {
-      uni.switchTab({ url: '/pages/chat/chat' })
+      uni.reLaunch({ url: '/pages/chat/chat' })
     }
   } catch (e) {
     const msg = (e as Error).message ?? ''
@@ -99,7 +101,7 @@ async function handleLogin() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #f5f5f5;
+  background-color: var(--bg-primary);
   padding: 60rpx 40rpx;
 }
 
@@ -111,20 +113,20 @@ async function handleLogin() {
     display: block;
     font-size: 56rpx;
     font-weight: bold;
-    color: #007aff;
+    color: var(--accent);
     margin-bottom: 16rpx;
   }
 
   .app-desc {
     display: block;
     font-size: 28rpx;
-    color: #999;
+    color: var(--text-tertiary);
   }
 }
 
 .login-body {
   width: 100%;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 24rpx;
   padding: 40rpx;
   box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.06);
@@ -138,16 +140,17 @@ async function handleLogin() {
 
 .input {
   height: 88rpx;
-  border: 1rpx solid #e5e5e5;
+  border: 1rpx solid var(--border-color);
   border-radius: 12rpx;
   padding: 0 24rpx;
   font-size: 28rpx;
-  background: #fafafa;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .btn-primary {
   height: 88rpx;
-  background: #007aff;
+  background: var(--accent);
   color: #fff;
   border-radius: 12rpx;
   font-size: 32rpx;
@@ -163,7 +166,7 @@ async function handleLogin() {
   display: block;
   text-align: center;
   font-size: 26rpx;
-  color: #dd524d;
+  color: var(--danger);
   margin-top: 16rpx;
 }
 </style>
