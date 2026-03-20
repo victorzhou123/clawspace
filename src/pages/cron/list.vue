@@ -1,5 +1,12 @@
 <template>
-  <view class="cron-page">
+  <view class="cron-page" :class="themeClass">
+    <view class="nav-bar">
+      <view class="nav-back" @tap="() => uni.navigateBack()">
+        <text class="nav-back-text">‹</text>
+      </view>
+      <text class="nav-title">定时任务</text>
+      <view style="width: 60rpx;" />
+    </view>
     <scroll-view
       scroll-y
       class="list"
@@ -52,6 +59,9 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { guardAuth } from '@/utils/guard'
 import { cronList } from '@/api/cron'
 import type { CronJob, CronSchedule } from '@/types/cron'
+import { useTheme } from '@/composables/useTheme'
+
+const { themeClass } = useTheme()
 
 const jobs = ref<CronJob[]>([])
 const loading = ref(false)
@@ -111,8 +121,34 @@ function formatTime(ts: number): string {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f5f5;
+  background: var(--bg-primary);
   position: relative;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  padding-top: env(safe-area-inset-top);
+  height: calc(88rpx + env(safe-area-inset-top));
+  background: var(--nav-bg);
+  border-bottom: 1rpx solid var(--nav-border);
+  flex-shrink: 0;
+
+  .nav-back {
+    width: 60rpx;
+    display: flex;
+    align-items: center;
+    .nav-back-text { font-size: 56rpx; color: var(--accent); line-height: 1; margin-top: -4rpx; }
+  }
+
+  .nav-title {
+    flex: 1;
+    text-align: center;
+    font-size: 32rpx;
+    font-weight: 500;
+    color: var(--nav-text);
+  }
 }
 
 .list { flex: 1; }
@@ -122,16 +158,16 @@ function formatTime(ts: number): string {
   align-items: center;
   justify-content: center;
   padding: 120rpx 0;
-  .empty-text { font-size: 28rpx; color: #999; }
+  .empty-text { font-size: 28rpx; color: var(--text-tertiary); }
 }
 
 .job-item {
   display: flex;
   align-items: center;
   padding: 28rpx 32rpx;
-  background: #fff;
-  border-bottom: 1rpx solid #f0f0f0;
-  &:active { background: #f5f5f5; }
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--border-color);
+  &:active { background: var(--bg-tertiary); }
 }
 
 .job-main {
@@ -149,7 +185,7 @@ function formatTime(ts: number): string {
 .job-name {
   font-size: 30rpx;
   font-weight: 500;
-  color: #1a1a1a;
+  color: var(--text-primary);
   flex: 1;
   overflow: hidden;
   white-space: nowrap;
@@ -162,27 +198,27 @@ function formatTime(ts: number): string {
   border-radius: 20rpx;
   font-size: 22rpx;
 
-  &.status-on { background: #e6f4ff; color: #007aff; }
-  &.status-off { background: #f5f5f5; color: #999; }
+  &.status-on { background: var(--accent-light); color: var(--accent); }
+  &.status-off { background: var(--bg-tertiary); color: var(--text-tertiary); }
 }
 
 .job-schedule {
   display: block;
   font-size: 26rpx;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 6rpx;
 }
 
 .job-last-run, .job-next-run {
   display: block;
   font-size: 24rpx;
-  color: #bbb;
+  color: var(--text-tertiary);
 }
 
 .run-ok { color: #52c41a; }
 .run-err { color: #ff4d4f; }
 
-.arrow { font-size: 40rpx; color: #ccc; margin-left: 16rpx; }
+.arrow { font-size: 40rpx; color: var(--text-tertiary); margin-left: 16rpx; }
 
 .fab {
   position: fixed;
@@ -190,7 +226,7 @@ function formatTime(ts: number): string {
   bottom: calc(48rpx + env(safe-area-inset-bottom));
   width: 100rpx;
   height: 100rpx;
-  background: #007aff;
+  background: var(--accent);
   border-radius: 50rpx;
   display: flex;
   align-items: center;

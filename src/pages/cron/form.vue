@@ -1,5 +1,12 @@
 <template>
-  <view class="form-page">
+  <view class="form-page" :class="themeClass">
+    <view class="nav-bar">
+      <view class="nav-back" @tap="() => uni.navigateBack()">
+        <text class="nav-back-text">‹</text>
+      </view>
+      <text class="nav-title">新建任务</text>
+      <view style="width: 60rpx;" />
+    </view>
     <scroll-view scroll-y class="form-scroll">
       <view class="form-body">
 
@@ -104,6 +111,9 @@ import { onLoad } from '@dcloudio/uni-app'
 import { guardAuth } from '@/utils/guard'
 import { cronAdd } from '@/api/cron'
 import type { CronSessionTarget, CronWakeMode } from '@/types/cron'
+import { useTheme } from '@/composables/useTheme'
+
+const { themeClass } = useTheme()
 
 onLoad(() => { guardAuth() })
 
@@ -163,7 +173,33 @@ async function onSave() {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f5f5;
+  background: var(--bg-primary);
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  padding-top: env(safe-area-inset-top);
+  height: calc(88rpx + env(safe-area-inset-top));
+  background: var(--nav-bg);
+  border-bottom: 1rpx solid var(--nav-border);
+  flex-shrink: 0;
+
+  .nav-back {
+    width: 60rpx;
+    display: flex;
+    align-items: center;
+    .nav-back-text { font-size: 56rpx; color: var(--accent); line-height: 1; margin-top: -4rpx; }
+  }
+
+  .nav-title {
+    flex: 1;
+    text-align: center;
+    font-size: 32rpx;
+    font-weight: 500;
+    color: var(--nav-text);
+  }
 }
 
 .form-scroll { flex: 1; }
@@ -176,26 +212,26 @@ async function onSave() {
 }
 
 .field {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16rpx;
   padding: 24rpx;
 
   .label {
     display: block;
     font-size: 26rpx;
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 16rpx;
   }
 
-  .required { color: #ff4d4f; }
+  .required { color: var(--danger); }
 }
 
 .input {
   width: 100%;
   height: 72rpx;
   font-size: 30rpx;
-  color: #1a1a1a;
-  border-bottom: 1rpx solid #f0f0f0;
+  color: var(--text-primary);
+  border-bottom: 1rpx solid var(--border-color);
   padding-bottom: 8rpx;
 
   &.mono { font-family: monospace; }
@@ -205,7 +241,7 @@ async function onSave() {
   width: 100%;
   min-height: 120rpx;
   font-size: 30rpx;
-  color: #1a1a1a;
+  color: var(--text-primary);
   line-height: 1.6;
 }
 
@@ -221,12 +257,12 @@ async function onSave() {
   text-align: center;
   font-size: 28rpx;
   border-radius: 12rpx;
-  background: #f5f5f5;
-  color: #666;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
 
   &.seg-active {
-    background: #e6f4ff;
-    color: #007aff;
+    background: var(--accent-light);
+    color: var(--accent);
     font-weight: 500;
   }
 }
@@ -234,14 +270,14 @@ async function onSave() {
 .footer {
   padding: 24rpx 32rpx;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
-  background: #fff;
-  border-top: 1rpx solid #eee;
+  background: var(--bg-card);
+  border-top: 1rpx solid var(--border-color);
 }
 
 .btn-save {
   width: 100%;
   height: 88rpx;
-  background: #007aff;
+  background: var(--accent);
   color: #fff;
   border-radius: 16rpx;
   font-size: 32rpx;

@@ -1,5 +1,12 @@
 <template>
-  <view class="detail-page">
+  <view class="detail-page" :class="themeClass">
+    <view class="nav-bar">
+      <view class="nav-back" @tap="() => uni.navigateBack()">
+        <text class="nav-back-text">‹</text>
+      </view>
+      <text class="nav-title">{{ navTitle }}</text>
+      <view style="width: 60rpx;" />
+    </view>
     <view v-if="loading" class="loading-mask">
       <text class="loading-text">加载中...</text>
     </view>
@@ -104,10 +111,14 @@ import { onLoad } from '@dcloudio/uni-app'
 import { guardAuth } from '@/utils/guard'
 import { cronList, cronRun, cronUpdate, cronRemove } from '@/api/cron'
 import type { CronJob, CronSchedule, CronPayload } from '@/types/cron'
+import { useTheme } from '@/composables/useTheme'
+
+const { themeClass } = useTheme()
 
 const job = ref<CronJob | null>(null)
 const loading = ref(false)
 const running = ref(false)
+const navTitle = ref('任务详情')
 let jobId = ''
 
 onLoad(async (options) => {
@@ -123,7 +134,7 @@ async function fetchJob() {
     const result = await cronList({ includeDisabled: true })
     job.value = result.jobs.find(j => j.id === jobId) ?? null
     if (!job.value) throw new Error('not found')
-    uni.setNavigationBarTitle({ title: job.value.name })
+    navTitle.value = job.value.name
   } catch {
     uni.showToast({ title: '加载失败', icon: 'none' })
     setTimeout(() => uni.navigateBack(), 1500)
@@ -202,7 +213,36 @@ function formatTime(ts: number): string {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f5f5;
+  background: var(--bg-primary);
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  padding-top: env(safe-area-inset-top);
+  height: calc(88rpx + env(safe-area-inset-top));
+  background: var(--nav-bg);
+  border-bottom: 1rpx solid var(--nav-border);
+  flex-shrink: 0;
+
+  .nav-back {
+    width: 60rpx;
+    display: flex;
+    align-items: center;
+    .nav-back-text { font-size: 56rpx; color: var(--accent); line-height: 1; margin-top: -4rpx; }
+  }
+
+  .nav-title {
+    flex: 1;
+    text-align: center;
+    font-size: 32rpx;
+    font-weight: 500;
+    color: var(--nav-text);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 }
 
 .loading-mask {
@@ -210,13 +250,13 @@ function formatTime(ts: number): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  .loading-text { font-size: 28rpx; color: #999; }
+  .loading-text { font-size: 28rpx; color: var(--text-tertiary); }
 }
 
 .content { flex: 1; }
 
 .card {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   margin: 24rpx 24rpx 0;
   padding: 28rpx 32rpx;
@@ -233,7 +273,7 @@ function formatTime(ts: number): string {
   flex: 1;
   font-size: 34rpx;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .job-status {
@@ -241,19 +281,19 @@ function formatTime(ts: number): string {
   padding: 4rpx 16rpx;
   border-radius: 20rpx;
   font-size: 22rpx;
-  &.status-on { background: #e6f4ff; color: #007aff; }
-  &.status-off { background: #f5f5f5; color: #999; }
+  &.status-on { background: var(--accent-light); color: var(--accent); }
+  &.status-off { background: var(--bg-tertiary); color: var(--text-tertiary); }
 }
 
 .job-desc {
   font-size: 28rpx;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .section-label {
   display: block;
   font-size: 24rpx;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 16rpx;
 }
 
@@ -262,17 +302,17 @@ function formatTime(ts: number): string {
   justify-content: space-between;
   align-items: flex-start;
   padding: 10rpx 0;
-  border-bottom: 1rpx solid #f5f5f5;
+  border-bottom: 1rpx solid var(--border-color);
   &:last-child { border-bottom: none; }
 }
 
-.info-label { font-size: 28rpx; color: #666; }
-.info-value { font-size: 28rpx; color: #1a1a1a; max-width: 60%; text-align: right; }
+.info-label { font-size: 28rpx; color: var(--text-secondary); }
+.info-value { font-size: 28rpx; color: var(--text-primary); max-width: 60%; text-align: right; }
 .mono { font-family: monospace; }
 
 .payload-text {
   font-size: 28rpx;
-  color: #1a1a1a;
+  color: var(--text-primary);
   line-height: 1.6;
 }
 
@@ -284,14 +324,14 @@ function formatTime(ts: number): string {
   gap: 16rpx;
   padding: 24rpx 32rpx;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
-  background: #fff;
-  border-top: 1rpx solid #eee;
+  background: var(--bg-card);
+  border-top: 1rpx solid var(--border-color);
 }
 
 .btn-run {
   flex: 2;
   height: 88rpx;
-  background: #007aff;
+  background: var(--accent);
   color: #fff;
   border-radius: 16rpx;
   font-size: 28rpx;
@@ -302,8 +342,8 @@ function formatTime(ts: number): string {
 .btn-toggle {
   flex: 1;
   height: 88rpx;
-  background: #f5f5f5;
-  color: #1a1a1a;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   border-radius: 16rpx;
   font-size: 28rpx;
   border: none;
@@ -312,10 +352,10 @@ function formatTime(ts: number): string {
 .btn-delete {
   flex: 1;
   height: 88rpx;
-  background: #fff;
-  color: #ff4d4f;
+  background: transparent;
+  color: var(--danger);
   border-radius: 16rpx;
   font-size: 28rpx;
-  border: 1rpx solid #ff4d4f;
+  border: 1rpx solid var(--danger);
 }
 </style>
