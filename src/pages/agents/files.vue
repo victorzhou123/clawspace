@@ -1,5 +1,12 @@
 <template>
-  <view class="files-page">
+  <view class="files-page" :class="themeClass">
+    <view class="nav-bar">
+      <view class="nav-back" @tap="onBack">
+        <text class="nav-back-text">‹</text>
+      </view>
+      <text class="nav-title">{{ navTitle }}</text>
+      <view style="width: 60rpx;" />
+    </view>
     <!-- 文件列表 -->
     <template v-if="!editingFile">
       <scroll-view scroll-y class="list" refresher-enabled :refresher-triggered="loading" @refresherrefresh="onRefresh">
@@ -23,9 +30,6 @@
 
     <!-- 文件编辑 -->
     <template v-else>
-      <view class="editor-header">
-        <text class="editor-filename">{{ editingFile }}</text>
-      </view>
       <view v-if="loadingFile" class="loading-mask">
         <text class="loading-text">加载中...</text>
       </view>
@@ -56,6 +60,9 @@ import { onLoad } from '@dcloudio/uni-app'
 import { guardAuth } from '@/utils/guard'
 import { agentsFilesList, agentsFilesGet, agentsFilesSet } from '@/api/agents'
 import type { AgentFileEntry } from '@/api/agents'
+import { useTheme } from '@/composables/useTheme'
+
+const { themeClass } = useTheme()
 
 const agentId = ref('')
 const files = ref<AgentFileEntry[]>([])
@@ -64,12 +71,12 @@ const editingFile = ref<string | null>(null)
 const fileContent = ref('')
 const loadingFile = ref(false)
 const saving = ref(false)
+const navTitle = ref('Agent 文件')
 
 onLoad(async (options) => {
   if (!guardAuth()) return
   agentId.value = options?.agentId as string ?? ''
   if (!agentId.value) { uni.navigateBack(); return }
-  uni.setNavigationBarTitle({ title: 'Agent 文件' })
   await fetchFiles()
 })
 
@@ -91,16 +98,15 @@ async function onRefresh() {
 
 async function openFile(name: string) {
   editingFile.value = name
+  navTitle.value = name
   loadingFile.value = true
-  fileContent.value = ''
-  uni.setNavigationBarTitle({ title: name })
   try {
     const result = await agentsFilesGet(agentId.value, name)
     fileContent.value = result.file.content ?? ''
   } catch {
     uni.showToast({ title: '加载失败', icon: 'none' })
     editingFile.value = null
-    uni.setNavigationBarTitle({ title: 'Agent 文件' })
+    navTitle.value = 'Agent 文件'
   } finally {
     loadingFile.value = false
   }
@@ -108,7 +114,7 @@ async function openFile(name: string) {
 
 function cancelEdit() {
   editingFile.value = null
-  uni.setNavigationBarTitle({ title: 'Agent 文件' })
+  navTitle.value = 'Agent 文件'
 }
 
 async function saveFile() {
@@ -118,12 +124,20 @@ async function saveFile() {
     await agentsFilesSet(agentId.value, editingFile.value, fileContent.value)
     uni.showToast({ title: '保存成功', icon: 'success' })
     editingFile.value = null
-    uni.setNavigationBarTitle({ title: 'Agent 文件' })
+    navTitle.value = 'Agent 文件'
     await fetchFiles()
   } catch {
     uni.showToast({ title: '保存失败', icon: 'none' })
   } finally {
     saving.value = false
+  }
+}
+
+function onBack() {
+  if (editingFile.value) {
+    cancelEdit()
+  } else {
+    uni.navigateBack()
   }
 }
 
@@ -140,7 +154,36 @@ function formatSize(size?: number): string {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f5f5;
+  background: var(--bg-primary);
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  padding-top: env(safe-area-inset-top);
+  height: calc(88rpx + env(safe-area-inset-top));
+  background: var(--nav-bg);
+  border-bottom: 1rpx solid var(--nav-border);
+  flex-shrink: 0;
+
+  .nav-back {
+    width: 60rpx;
+    display: flex;
+    align-items: center;
+    .nav-back-text { font-size: 56rpx; color: var(--accent); line-height: 1; margin-top: -4rpx; }
+  }
+
+  .nav-title {
+    flex: 1;
+    text-align: center;
+    font-size: 32rpx;
+    font-weight: 500;
+    color: var(--nav-text);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 }
 
 .list {
@@ -152,31 +195,31 @@ function formatSize(size?: number): string {
   align-items: center;
   justify-content: center;
   padding: 120rpx 0;
-  .empty-text { font-size: 28rpx; color: #999; }
+  .empty-text { font-size: 28rpx; color: var(--text-tertiary); }
 }
 
 .file-item {
   display: flex;
   align-items: center;
   padding: 28rpx 32rpx;
-  background: #fff;
-  border-bottom: 1rpx solid #f0f0f0;
-  &:active { background: #f5f5f5; }
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--border-color);
+  &:active { background: var(--bg-tertiary); }
 }
 
 .file-info {
   flex: 1;
-  .file-name { display: block; font-size: 30rpx; color: #1a1a1a; margin-bottom: 6rpx; }
-  .file-meta { display: block; font-size: 24rpx; color: #bbb; }
+  .file-name { display: block; font-size: 30rpx; color: var(--text-primary); margin-bottom: 6rpx; }
+  .file-meta { display: block; font-size: 24rpx; color: var(--text-tertiary); }
 }
 
-.arrow { font-size: 40rpx; color: #ccc; }
+.arrow { font-size: 40rpx; color: var(--text-tertiary); }
 
 .editor-header {
   padding: 20rpx 32rpx;
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
-  .editor-filename { font-size: 28rpx; color: #666; font-family: monospace; }
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--border-color);
+  .editor-filename { font-size: 28rpx; color: var(--text-secondary); font-family: monospace; }
 }
 
 .loading-mask {
@@ -184,12 +227,12 @@ function formatSize(size?: number): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  .loading-text { font-size: 28rpx; color: #999; }
+  .loading-text { font-size: 28rpx; color: var(--text-tertiary); }
 }
 
 .editor-scroll {
   flex: 1;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .editor {
@@ -199,7 +242,7 @@ function formatSize(size?: number): string {
   font-size: 26rpx;
   font-family: monospace;
   line-height: 1.7;
-  color: #1a1a1a;
+  color: var(--text-primary);
   box-sizing: border-box;
 }
 
@@ -208,15 +251,15 @@ function formatSize(size?: number): string {
   gap: 24rpx;
   padding: 24rpx 32rpx;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
-  background: #fff;
-  border-top: 1rpx solid #eee;
+  background: var(--bg-card);
+  border-top: 1rpx solid var(--border-color);
 }
 
 .btn-cancel {
   flex: 1;
   height: 88rpx;
-  background: #f5f5f5;
-  color: #666;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
   border-radius: 16rpx;
   font-size: 32rpx;
   border: none;
@@ -225,7 +268,7 @@ function formatSize(size?: number): string {
 .btn-save {
   flex: 2;
   height: 88rpx;
-  background: #007aff;
+  background: var(--accent);
   color: #fff;
   border-radius: 16rpx;
   font-size: 32rpx;

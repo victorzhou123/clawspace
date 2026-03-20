@@ -1,5 +1,12 @@
 <template>
-  <view class="detail-page">
+  <view class="detail-page" :class="themeClass">
+    <view class="nav-bar">
+      <view class="nav-back" @tap="() => uni.navigateBack()">
+        <text class="nav-back-text">‹</text>
+      </view>
+      <text class="nav-title">{{ navTitle }}</text>
+      <view style="width: 60rpx;" />
+    </view>
     <view v-if="loading" class="loading-mask">
       <text class="loading-text">加载中...</text>
     </view>
@@ -72,10 +79,13 @@ import { onLoad } from '@dcloudio/uni-app'
 import { guardAuth } from '@/utils/guard'
 import { useAgentStore } from '@/stores/agent'
 import type { Agent } from '@/types/agent'
+import { useTheme } from '@/composables/useTheme'
 
 const agentStore = useAgentStore()
 const agent = ref<Agent | null>(null)
 const loading = ref(false)
+const navTitle = ref('Agent 详情')
+const { themeClass } = useTheme()
 
 onLoad(async (options) => {
   if (!guardAuth()) return
@@ -89,7 +99,7 @@ onLoad(async (options) => {
     await agentStore.fetchAgents()
     agent.value = agentStore.agents.find(a => a.id === agentId) ?? null
     if (!agent.value) throw new Error('not found')
-    uni.setNavigationBarTitle({ title: agent.value.name })
+    navTitle.value = agent.value.name
   } catch {
     uni.showToast({ title: '加载失败', icon: 'none' })
     setTimeout(() => uni.navigateBack(), 1500)
@@ -135,7 +145,36 @@ function confirmDelete() {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f5f5;
+  background: var(--bg-primary);
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  padding-top: env(safe-area-inset-top);
+  height: calc(88rpx + env(safe-area-inset-top));
+  background: var(--nav-bg);
+  border-bottom: 1rpx solid var(--nav-border);
+  flex-shrink: 0;
+
+  .nav-back {
+    width: 60rpx;
+    display: flex;
+    align-items: center;
+    .nav-back-text { font-size: 56rpx; color: var(--accent); line-height: 1; margin-top: -4rpx; }
+  }
+
+  .nav-title {
+    flex: 1;
+    text-align: center;
+    font-size: 32rpx;
+    font-weight: 500;
+    color: var(--nav-text);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 }
 
 .loading-mask {
@@ -146,7 +185,7 @@ function confirmDelete() {
 
   .loading-text {
     font-size: 28rpx;
-    color: #999;
+    color: var(--text-tertiary);
   }
 }
 
@@ -156,7 +195,7 @@ function confirmDelete() {
 
 .card {
   margin: 24rpx 24rpx 0;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20rpx;
   padding: 32rpx;
 }
@@ -172,7 +211,7 @@ function confirmDelete() {
   width: 96rpx;
   height: 96rpx;
   border-radius: 24rpx;
-  background: #007aff;
+  background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -194,13 +233,13 @@ function confirmDelete() {
   .agent-name {
     font-size: 36rpx;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--text-primary);
   }
 
   .agent-model {
     font-size: 24rpx;
-    color: #007aff;
-    background: rgba(0, 122, 255, 0.08);
+    color: var(--accent);
+    background: var(--accent-light);
     padding: 4rpx 16rpx;
     border-radius: 8rpx;
     align-self: flex-start;
@@ -209,20 +248,20 @@ function confirmDelete() {
 
 .agent-desc {
   font-size: 28rpx;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
 .section-label {
   display: block;
   font-size: 26rpx;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 16rpx;
 }
 
 .system-prompt {
   font-size: 28rpx;
-  color: #1a1a1a;
+  color: var(--text-primary);
   line-height: 1.7;
   white-space: pre-wrap;
 }
@@ -253,8 +292,8 @@ function confirmDelete() {
   cursor: pointer;
   &:active { opacity: 0.7; }
 
-  .action-label { font-size: 30rpx; color: #1a1a1a; }
-  .arrow { font-size: 40rpx; color: #ccc; }
+  .action-label { font-size: 30rpx; color: var(--text-primary); }
+  .arrow { font-size: 40rpx; color: var(--text-tertiary); }
 }
 
 .meta-row {
@@ -262,7 +301,7 @@ function confirmDelete() {
   justify-content: space-between;
   align-items: center;
   padding: 16rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid var(--border-color);
 
   &:last-child {
     border-bottom: none;
@@ -271,13 +310,13 @@ function confirmDelete() {
 
 .meta-label {
   font-size: 28rpx;
-  color: #999;
+  color: var(--text-tertiary);
   flex-shrink: 0;
 }
 
 .meta-value {
   font-size: 28rpx;
-  color: #1a1a1a;
+  color: var(--text-primary);
   text-align: right;
   flex: 1;
   margin-left: 24rpx;
@@ -285,7 +324,7 @@ function confirmDelete() {
 
 .id-text {
   font-size: 22rpx;
-  color: #999;
+  color: var(--text-tertiary);
   word-break: break-all;
 }
 
@@ -293,15 +332,15 @@ function confirmDelete() {
   display: flex;
   gap: 24rpx;
   padding: 24rpx 32rpx;
-  background: #fff;
-  border-top: 1rpx solid #eee;
+  background: var(--bg-card);
+  border-top: 1rpx solid var(--border-color);
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
 }
 
 .btn-edit {
   flex: 1;
   height: 88rpx;
-  background: #007aff;
+  background: var(--accent);
   color: #fff;
   border-radius: 16rpx;
   font-size: 32rpx;
@@ -311,10 +350,10 @@ function confirmDelete() {
 .btn-delete {
   flex: 1;
   height: 88rpx;
-  background: #fff;
-  color: #ff4d4f;
+  background: transparent;
+  color: var(--danger);
   border-radius: 16rpx;
   font-size: 32rpx;
-  border: 1rpx solid #ff4d4f;
+  border: 1rpx solid var(--danger);
 }
 </style>

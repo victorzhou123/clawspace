@@ -6,7 +6,7 @@
         <text class="nav-back-text">‹</text>
       </view>
       <text class="nav-title">Agent 管理</text>
-      <text class="create-btn" @tap="goCreate">+ 新建</text>
+      <view style="width: 60rpx;" />
     </view>
 
     <scroll-view
@@ -38,6 +38,10 @@
         <text class="arrow">›</text>
       </view>
     </scroll-view>
+
+    <view class="fab" @tap="goCreate">
+      <text class="fab-text">+</text>
+    </view>
   </view>
 </template>
 
@@ -93,6 +97,7 @@ function confirmDelete(agentId: string, name: string) {
   display: flex;
   flex-direction: column;
   background-color: var(--bg-primary);
+  position: relative;
 }
 
 .nav-bar {
@@ -118,13 +123,6 @@ function confirmDelete(agentId: string, name: string) {
     font-size: 32rpx;
     font-weight: 500;
     color: var(--nav-text);
-  }
-
-  .create-btn {
-    font-size: 28rpx;
-    color: var(--accent);
-    width: 80rpx;
-    text-align: right;
   }
 }
 
@@ -193,4 +191,26 @@ function confirmDelete(agentId: string, name: string) {
 }
 
 .arrow { font-size: 40rpx; color: var(--text-tertiary); flex-shrink: 0; }
+
+.fab {
+  position: fixed;
+  right: 48rpx;
+  bottom: calc(48rpx + env(safe-area-inset-bottom));
+  width: 100rpx;
+  height: 100rpx;
+  background: var(--accent);
+  border-radius: 50rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(0, 122, 255, 0.4);
+  &:active { opacity: 0.85; }
+}
+
+.fab-text {
+  font-size: 56rpx;
+  color: #fff;
+  line-height: 1;
+  margin-top: -4rpx;
+}
 </style>

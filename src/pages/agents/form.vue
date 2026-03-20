@@ -1,5 +1,12 @@
 <template>
-  <view class="form-page">
+  <view class="form-page" :class="themeClass">
+    <view class="nav-bar">
+      <view class="nav-back" @tap="() => uni.navigateBack()">
+        <text class="nav-back-text">‹</text>
+      </view>
+      <text class="nav-title">{{ navTitle }}</text>
+      <view style="width: 60rpx;" />
+    </view>
     <view v-if="loading" class="loading-mask">
       <text class="loading-text">加载中...</text>
     </view>
@@ -28,7 +35,16 @@
 
         <view class="field">
           <text class="label">模型</text>
-          <ModelPicker v-model="form.model" placeholder="默认（不指定）" />
+          <picker
+            :range="modelRange"
+            :value="modelIndex"
+            @change="onModelChange"
+          >
+            <view class="picker-row">
+              <text class="picker-value">{{ form.model || '默认（不指定）' }}</text>
+              <text class="picker-arrow">›</text>
+            </view>
+          </picker>
         </view>
 
         <view class="field">
@@ -55,16 +71,32 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { guardAuth } from '@/utils/guard'
 import { useAgentStore } from '@/stores/agent'
-import ModelPicker from '@/components/ModelPicker.vue'
+import { useModelStore } from '@/stores/model'
+import { useTheme } from '@/composables/useTheme'
 
 const agentStore = useAgentStore()
+const modelStore = useModelStore()
 const saving = ref(false)
 const loading = ref(false)
 const agentId = ref<string | null>(null)
+const navTitle = ref('新建 Agent')
+const { themeClass } = useTheme()
+
+const modelRange = computed(() => ['默认（不指定）', ...modelStore.models.map(m => m.id)])
+const modelIndex = computed(() => {
+  if (!form.model) return 0
+  const idx = modelStore.models.findIndex(m => m.id === form.model)
+  return idx >= 0 ? idx + 1 : 0
+})
+
+function onModelChange(e: any) {
+  const idx = e.detail.value as number
+  form.model = idx === 0 ? '' : modelStore.models[idx - 1].id
+}
 
 const form = reactive({
   name: '',
@@ -75,9 +107,10 @@ const form = reactive({
 
 onLoad(async (options) => {
   if (!guardAuth()) return
+  modelStore.fetchModels().catch(() => {})
   if (options?.agentId) {
     agentId.value = options.agentId as string
-    uni.setNavigationBarTitle({ title: '编辑 Agent' })
+    navTitle.value = '编辑 Agent'
     // 从 API 实时获取数据，避免 store 缓存丢失
     loading.value = true
     try {
@@ -95,7 +128,7 @@ onLoad(async (options) => {
       loading.value = false
     }
   } else {
-    uni.setNavigationBarTitle({ title: '新建 Agent' })
+    navTitle.value = '新建 Agent'
   }
 })
 
@@ -139,8 +172,34 @@ async function onSave() {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f5f5;
+  background: var(--bg-primary);
   position: relative;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  padding-top: env(safe-area-inset-top);
+  height: calc(88rpx + env(safe-area-inset-top));
+  background: var(--nav-bg);
+  border-bottom: 1rpx solid var(--nav-border);
+  flex-shrink: 0;
+
+  .nav-back {
+    width: 60rpx;
+    display: flex;
+    align-items: center;
+    .nav-back-text { font-size: 56rpx; color: var(--accent); line-height: 1; margin-top: -4rpx; }
+  }
+
+  .nav-title {
+    flex: 1;
+    text-align: center;
+    font-size: 32rpx;
+    font-weight: 500;
+    color: var(--nav-text);
+  }
 }
 
 .loading-mask {
@@ -149,7 +208,8 @@ async function onSave() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-primary);
+  opacity: 0.9;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -157,7 +217,7 @@ async function onSave() {
 
   .loading-text {
     font-size: 28rpx;
-    color: #999;
+    color: var(--text-tertiary);
   }
 }
 
@@ -173,19 +233,19 @@ async function onSave() {
 }
 
 .field {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16rpx;
   padding: 24rpx;
 
   .label {
     display: block;
     font-size: 26rpx;
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 16rpx;
   }
 
   .required {
-    color: #ff4d4f;
+    color: var(--danger);
   }
 }
 
@@ -193,8 +253,8 @@ async function onSave() {
   width: 100%;
   height: 72rpx;
   font-size: 30rpx;
-  color: #1a1a1a;
-  border-bottom: 1rpx solid #f0f0f0;
+  color: var(--text-primary);
+  border-bottom: 1rpx solid var(--border-color);
   padding-bottom: 8rpx;
 }
 
@@ -202,20 +262,38 @@ async function onSave() {
   width: 100%;
   min-height: 160rpx;
   font-size: 30rpx;
-  color: #1a1a1a;
+  color: var(--text-primary);
   line-height: 1.6;
+}
+
+.picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rpx 0;
+
+  .picker-value {
+    font-size: 30rpx;
+    color: var(--text-primary);
+    flex: 1;
+  }
+
+  .picker-arrow {
+    font-size: 40rpx;
+    color: var(--text-tertiary);
+  }
 }
 
 .footer {
   padding: 24rpx 32rpx;
-  background: #fff;
-  border-top: 1rpx solid #eee;
+  background: var(--bg-card);
+  border-top: 1rpx solid var(--border-color);
 }
 
 .btn-save {
   width: 100%;
   height: 88rpx;
-  background: #007aff;
+  background: var(--accent);
   color: #fff;
   border-radius: 16rpx;
   font-size: 32rpx;
