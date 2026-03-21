@@ -32,6 +32,10 @@
           <text class="item-label">清除缓存</text>
           <text class="item-value">{{ cacheSize }}</text>
         </view>
+        <view class="item" @tap="goAgents">
+          <text class="item-label">Agent 管理</text>
+          <text class="arrow">›</text>
+        </view>
         <view class="item" @tap="goTools">
           <text class="item-label">工具目录</text>
           <text class="arrow">›</text>
@@ -141,6 +145,10 @@ function clearCache() {
   })
 }
 
+function goAgents() {
+  uni.navigateTo({ url: '/pages/agents/agents' })
+}
+
 function goMonitor() {
   uni.navigateTo({ url: '/pages/monitor/monitor' })
 }
@@ -184,7 +192,7 @@ function confirmLogout() {
   align-items: center;
   padding: 0 24rpx;
   padding-top: env(safe-area-inset-top);
-  height: calc(88rpx + env(safe-area-inset-top));
+  height: env(safe-area-inset-top);
   background: var(--nav-bg);
   border-bottom: 1rpx solid var(--nav-border);
   flex-shrink: 0;
@@ -193,7 +201,7 @@ function confirmLogout() {
     width: 60rpx;
     display: flex;
     align-items: center;
-    .nav-back-text { font-size: 56rpx; color: var(--accent); line-height: 1; margin-top: -4rpx; }
+    .nav-back-text { font-size: 44rpx; color: var(--accent); line-height: 1; margin-top: -2rpx; }
   }
 
   .nav-title {
