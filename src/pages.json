@@ -86,7 +86,10 @@
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "clawspace",
-		"navigationBarBackgroundColor": "#FFFFFF",
-		"backgroundColor": "#F5F5F5"
+		"navigationBarBackgroundColor": "#1c1c1e",
+		"backgroundColor": "#111111",
+		"app-plus": {
+			"bounce": "none"
+		}
 	}
 }
