@@ -13,7 +13,9 @@
         <text class="nav-title">{{ currentSessionTitle || 'clawspace' }}</text>
         <text v-if="streaming" class="nav-typing">{{ typingText }}</text>
       </view>
-      <view class="nav-right" />
+      <view class="nav-right" @tap="() => uni.navigateTo({ url: '/pages/settings/settings' })">
+        <image class="nav-settings-icon" :src="theme === 'dark' ? '/static/icon/setting-whrite.svg' : '/static/icon/setting-dark.svg'" mode="aspectFit" />
+      </view>
     </view>
 
     <!-- 抽屉 -->
@@ -103,7 +105,7 @@ const chatStore = useChatStore()
 const { currentSessionId, sessions } = storeToRefs(sessionStore)
 const { messages, sending, streaming, hasMore } = storeToRefs(chatStore)
 
-const { themeClass } = useTheme()
+const { themeClass, theme } = useTheme()
 
 const inputText = ref('')
 const scrollAnchor = ref('msg-bottom')
@@ -279,7 +281,7 @@ async function onAbort() {
   align-items: center;
   padding: 0 24rpx;
   padding-top: env(safe-area-inset-top);
-  height: calc(88rpx + env(safe-area-inset-top));
+  height: env(safe-area-inset-top);
   background: var(--nav-bg);
   border-bottom: 1rpx solid var(--nav-border);
   flex-shrink: 0;
@@ -287,12 +289,23 @@ async function onAbort() {
 
 .nav-left, .nav-right {
   width: 80rpx;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
 }
 
-.nav-title {
+.nav-center {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.nav-right { justify-content: flex-end; }
+.nav-settings-icon { width: 46rpx; height: 46rpx; }
+
+.nav-title {
   text-align: center;
   font-size: 32rpx;
   font-weight: 500;

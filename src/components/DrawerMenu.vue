@@ -12,40 +12,24 @@
     </view>
 
     <view class="section-title">会话</view>
-    <scroll-view scroll-y class="session-list" refresher-enabled :refresher-triggered="sessionLoading" @refresherrefresh="onRefreshSessions">
-      <view v-if="sessions.length === 0 && !sessionLoading" class="empty-tip">
-        <text>暂无会话</text>
-      </view>
-      <view
-        v-for="s in sessions" :key="s.key"
-        class="session-item" :class="s.key === currentSessionId ? 'session-active' : ''"
-        @tap="selectSession(s.key)"
-        @longpress="onSessionLongPress(s.key, s.key || s.label || s.derivedTitle || '')"
-      >
-        <view class="session-item-inner">
-          <text class="session-title">{{ s.key || s.label || s.derivedTitle || s.displayName }}</text>
-          <text class="session-preview">{{ s.lastMessagePreview || '暂无消息' }}</text>
+    <view class="session-list-wrapper">
+      <scroll-view scroll-y class="session-list" refresher-enabled :refresher-triggered="sessionLoading" @refresherrefresh="onRefreshSessions">
+        <view v-if="sessions.length === 0 && !sessionLoading" class="empty-tip">
+          <text>暂无会话</text>
         </view>
-        <text class="session-time">{{ formatTime(s.updatedAt) }}</text>
-      </view>
-    </scroll-view>
-
-    <view class="nav-list">
-      <view class="nav-item" @tap="go('/pages/agents/agents')">
-        <text class="nav-icon">🤖</text><text class="nav-label">Agent 管理</text>
-      </view>
-      <view class="nav-item" @tap="go('/pages/tools/tools')">
-        <text class="nav-icon">🔧</text><text class="nav-label">工具目录</text>
-      </view>
-      <view class="nav-item" @tap="go('/pages/cron/list')">
-        <text class="nav-icon">⏰</text><text class="nav-label">定时任务</text>
-      </view>
-      <view class="nav-item" @tap="go('/pages/monitor/monitor')">
-        <text class="nav-icon">📊</text><text class="nav-label">系统状态</text>
-      </view>
-      <view class="nav-item" @tap="go('/pages/settings/settings')">
-        <text class="nav-icon">⚙️</text><text class="nav-label">设置</text>
-      </view>
+        <view
+          v-for="s in sessions" :key="s.key"
+          class="session-item" :class="s.key === currentSessionId ? 'session-active' : ''"
+          @tap="selectSession(s.key)"
+          @longpress="onSessionLongPress(s.key, s.key || s.label || s.derivedTitle || '')"
+        >
+          <view class="session-item-inner">
+            <text class="session-title">{{ s.key || s.label || s.derivedTitle || s.displayName }}</text>
+            <text class="session-preview">{{ s.lastMessagePreview || '暂无消息' }}</text>
+          </view>
+          <text class="session-time">{{ formatTime(s.updatedAt) }}</text>
+        </view>
+      </scroll-view>
     </view>
   </view>
 </template>
@@ -129,11 +113,6 @@ function confirmDelete(key: string) {
       if (res.confirm) await sessionStore.deleteSession(key).catch(() => {})
     },
   })
-}
-
-function go(url: string) {
-  close()
-  uni.navigateTo({ url })
 }
 
 function formatTime(ts: number | null): string {
