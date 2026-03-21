@@ -25,7 +25,16 @@ onHide(() => {});
 <style lang="scss">
 @import '@/styles/theme.scss';
 
-page {
+page,
+body,
+html {
+  width: 100%;
+  height: 100%;
   background-color: var(--bg-primary, #111111);
+  font-family: "SF Pro Text", "SF Pro Display", "PingFang SC", -apple-system, sans-serif;
+}
+
+page {
+  overscroll-behavior: none;
 }
 </style>
