@@ -38,7 +38,6 @@ export const useUserStore = defineStore('user', () => {
       return true
     } catch (e) {
       logger.warn(TAG, 'auto login failed', e)
-      _clearAuth()
       return false
     }
   }
