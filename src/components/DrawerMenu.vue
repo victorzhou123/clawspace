@@ -46,7 +46,7 @@ import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
 import { useTheme } from '@/composables/useTheme'
 import { agentsList } from '@/api/agents'
-import { sessionsCreate } from '@/api/sessions'
+import { sessionsPatch } from '@/api/sessions'
 import type { Agent } from '@/types/agent'
 import { onVibrate } from '@/utils/haptic'
 
@@ -75,9 +75,11 @@ async function onNewSession() {
       success: async ({ tapIndex }) => {
         try {
           const agent = agents[tapIndex]
-          const result = await sessionsCreate({ agentId: agent.id ?? agent.agentId })
+          const agentId = agent.id ?? agent.agentId
+          const key = `agent:${agentId}:dashboard:${Date.now()}`
+          await sessionsPatch(key, { label: `新会话 - ${agent.name}` })
           await sessionStore.fetchSessions()
-          sessionStore.setCurrentSession(result.key)
+          sessionStore.setCurrentSession(key)
           close()
         } catch (e) {
           uni.showToast({ title: '创建失败', icon: 'none' })
