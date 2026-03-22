@@ -46,7 +46,7 @@ import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
 import { useTheme } from '@/composables/useTheme'
 import { agentsList } from '@/api/agents'
-import { sessionsPatch } from '@/api/sessions'
+import { sessionsPatch, sessionsReset } from '@/api/sessions'
 import type { Agent } from '@/types/agent'
 import { onVibrate } from '@/utils/haptic'
 
@@ -78,6 +78,7 @@ async function onNewSession() {
           const agentId = agent.id ?? agent.agentId
           const key = `agent:${agentId}:dashboard:${Date.now()}`
           await sessionsPatch(key, { label: `新会话 - ${agent.name}` })
+          await sessionsReset(key)
           await sessionStore.fetchSessions()
           sessionStore.setCurrentSession(key)
           close()
