@@ -2,7 +2,7 @@
   <view class="tools-page" :class="themeClass">
     <view class="nav-bar">
       <view class="nav-back" @tap="() => uni.navigateBack()">
-        <text class="nav-back-text">‹</text>
+        <image class="nav-back-icon" :src="theme === 'dark' ? '/static/icon/back-light.svg' : '/static/icon/back-dark.svg'" mode="aspectFit" />
       </view>
       <text class="nav-title">工具目录</text>
       <view style="width: 60rpx;" />
@@ -49,7 +49,7 @@ import { useTheme } from '@/composables/useTheme'
 
 const toolsStore = useToolsStore()
 const { groups, loading } = storeToRefs(toolsStore)
-const { themeClass } = useTheme()
+const { themeClass, theme } = useTheme()
 
 onLoad(() => { guardAuth() })
 
@@ -86,7 +86,7 @@ async function onRefresh() {
     width: 60rpx;
     display: flex;
     align-items: center;
-    .nav-back-text { font-size: 44rpx; color: var(--accent); line-height: 1; margin-top: -2rpx; }
+    .nav-back-icon { width: 44rpx; height: 44rpx; }
   }
 
   .nav-title {

@@ -2,7 +2,7 @@
   <view class="detail-page" :class="themeClass">
     <view class="nav-bar">
       <view class="nav-back" @tap="() => uni.navigateBack()">
-        <text class="nav-back-text">‹</text>
+        <image class="nav-back-icon" :src="theme === 'dark' ? '/static/icon/back-light.svg' : '/static/icon/back-dark.svg'" mode="aspectFit" />
       </view>
       <text class="nav-title">{{ navTitle }}</text>
       <view style="width: 60rpx;" />
@@ -85,7 +85,7 @@ const agentStore = useAgentStore()
 const agent = ref<Agent | null>(null)
 const loading = ref(false)
 const navTitle = ref('Agent 详情')
-const { themeClass } = useTheme()
+const { themeClass, theme } = useTheme()
 
 onLoad(async (options) => {
   if (!guardAuth()) return
@@ -162,7 +162,7 @@ function confirmDelete() {
     width: 60rpx;
     display: flex;
     align-items: center;
-    .nav-back-text { font-size: 44rpx; color: var(--accent); line-height: 1; margin-top: -2rpx; }
+    .nav-back-icon { width: 44rpx; height: 44rpx; }
   }
 
   .nav-title {

@@ -2,7 +2,7 @@
   <view class="files-page" :class="themeClass">
     <view class="nav-bar">
       <view class="nav-back" @tap="onBack">
-        <text class="nav-back-text">‹</text>
+        <image class="nav-back-icon" :src="theme === 'dark' ? '/static/icon/back-light.svg' : '/static/icon/back-dark.svg'" mode="aspectFit" />
       </view>
       <text class="nav-title">{{ navTitle }}</text>
       <view style="width: 60rpx;" />
@@ -62,7 +62,7 @@ import { agentsFilesList, agentsFilesGet, agentsFilesSet } from '@/api/agents'
 import type { AgentFileEntry } from '@/api/agents'
 import { useTheme } from '@/composables/useTheme'
 
-const { themeClass } = useTheme()
+const { themeClass, theme } = useTheme()
 
 const agentId = ref('')
 const files = ref<AgentFileEntry[]>([])
@@ -171,7 +171,7 @@ function formatSize(size?: number): string {
     width: 60rpx;
     display: flex;
     align-items: center;
-    .nav-back-text { font-size: 44rpx; color: var(--accent); line-height: 1; margin-top: -2rpx; }
+    .nav-back-icon { width: 44rpx; height: 44rpx; }
   }
 
   .nav-title {

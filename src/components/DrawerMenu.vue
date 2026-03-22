@@ -11,6 +11,10 @@
       </view>
     </view>
 
+    <view class="new-session-btn" @tap="onNewSession">
+      <text class="new-session-icon">＋</text>
+    </view>
+
     <view class="section-title">会话</view>
     <view class="session-list-wrapper">
       <scroll-view scroll-y class="session-list" refresher-enabled :refresher-triggered="sessionLoading" @refresherrefresh="onRefreshSessions">
@@ -35,12 +39,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/stores/user'
 import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
 import { useTheme } from '@/composables/useTheme'
+import { agentsList } from '@/api/agents'
+import { sessionsCreate } from '@/api/sessions'
+import type { Agent } from '@/types/agent'
+import { onVibrate } from '@/utils/haptic'
 
 defineProps<{ visible: boolean }>()
 const emit = defineEmits<{ (e: 'close'): void }>()
@@ -51,6 +59,37 @@ const chatStore = useChatStore()
 const { instanceUrl } = storeToRefs(userStore)
 const { sessions, loading: sessionLoading, currentSessionId } = storeToRefs(sessionStore)
 const { themeClass } = useTheme()
+const creatingSession = ref(false)
+
+async function onNewSession() {
+  try {
+    creatingSession.value = true
+    const { agents } = await agentsList()
+    if (!agents || agents.length === 0) {
+      uni.showToast({ title: '暂无可用 Agent', icon: 'none' })
+      return
+    }
+    const itemList = agents.map((a: Agent) => `${a.avatar ?? '🤖'} ${a.name}`)
+    uni.showActionSheet({
+      itemList,
+      success: async ({ tapIndex }) => {
+        try {
+          const agent = agents[tapIndex]
+          const result = await sessionsCreate({ agentId: agent.id ?? agent.agentId })
+          await sessionStore.fetchSessions()
+          sessionStore.setCurrentSession(result.key)
+          close()
+        } catch (e) {
+          uni.showToast({ title: '创建失败', icon: 'none' })
+        }
+      },
+    })
+  } catch (e) {
+    uni.showToast({ title: '获取 Agent 失败', icon: 'none' })
+  } finally {
+    creatingSession.value = false
+  }
+}
 
 
 const userName = computed(() => {
@@ -69,6 +108,7 @@ async function onRefreshSessions() {
 }
 
 function selectSession(key: string) {
+  onVibrate()
   sessionStore.setCurrentSession(key)
   close()
 }
@@ -208,6 +248,23 @@ function formatTime(ts: number | null): string {
 }
 
 .session-time { font-size: 22rpx; color: var(--text-tertiary); flex-shrink: 0; }
+
+.new-session-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16rpx 32rpx;
+  height: 72rpx;
+  border-radius: 16rpx;
+  border: 1rpx dashed var(--border-color);
+  &:active { background: var(--bg-tertiary); }
+}
+
+.new-session-icon {
+  font-size: 40rpx;
+  color: var(--text-secondary);
+  line-height: 1;
+}
 
 .nav-list {
   border-top: 1rpx solid var(--border-light);

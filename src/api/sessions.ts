@@ -32,6 +32,20 @@ export function sessionsDelete(key: string): Promise<void> {
   return rpc('sessions.delete', { key })
 }
 
+export interface SessionsCreateParams {
+  agentId?: string
+  label?: string
+}
+
+export interface SessionsCreateResult {
+  key: string
+  sessionId: string
+}
+
+export function sessionsCreate(params?: SessionsCreateParams): Promise<SessionsCreateResult> {
+  return rpc('sessions.create', params ?? {})
+}
+
 export function sessionsReset(key: string): Promise<void> {
   return rpc('sessions.reset', { key })
 }

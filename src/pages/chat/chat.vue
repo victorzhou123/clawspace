@@ -3,7 +3,7 @@
     <!-- 自定义导航栏 -->
     <view class="nav-bar">
       <view class="nav-left" @tap="openDrawer">
-        <view class="hamburger">
+        <view class="hamburger" @tap="onVibrate()">
           <view class="bar" />
           <view class="bar" />
           <view class="bar" />
@@ -13,7 +13,7 @@
         <text class="nav-title">{{ currentSessionTitle || 'clawspace' }}</text>
         <text v-if="streaming" class="nav-typing">{{ typingText }}</text>
       </view>
-      <view class="nav-right" @tap="() => uni.navigateTo({ url: '/pages/settings/settings' })">
+      <view class="nav-right" @tap="() => { onVibrate(); uni.navigateTo({ url: '/pages/settings/settings' }) }">
         <image class="nav-settings-icon" :src="theme === 'dark' ? '/static/icon/setting-whrite.svg' : '/static/icon/setting-dark.svg'" mode="aspectFit" />
       </view>
     </view>
@@ -99,6 +99,7 @@ import { useChatStore } from '@/stores/chat'
 import MsgBubble from '@/components/MsgBubble.vue'
 import DrawerMenu from '@/components/DrawerMenu.vue'
 import { useTheme } from '@/composables/useTheme'
+import { onVibrate } from '@/utils/haptic'
 
 const sessionStore = useSessionStore()
 const chatStore = useChatStore()

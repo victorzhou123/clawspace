@@ -2,7 +2,7 @@
   <view class="form-page" :class="themeClass">
     <view class="nav-bar">
       <view class="nav-back" @tap="() => uni.navigateBack()">
-        <text class="nav-back-text">‹</text>
+        <image class="nav-back-icon" :src="theme === 'dark' ? '/static/icon/back-light.svg' : '/static/icon/back-dark.svg'" mode="aspectFit" />
       </view>
       <text class="nav-title">{{ navTitle }}</text>
       <view style="width: 60rpx;" />
@@ -84,7 +84,7 @@ const saving = ref(false)
 const loading = ref(false)
 const agentId = ref<string | null>(null)
 const navTitle = ref('新建 Agent')
-const { themeClass } = useTheme()
+const { themeClass, theme } = useTheme()
 
 const modelRange = computed(() => ['默认（不指定）', ...modelStore.models.map(m => m.id)])
 const modelIndex = computed(() => {
@@ -190,7 +190,7 @@ async function onSave() {
     width: 60rpx;
     display: flex;
     align-items: center;
-    .nav-back-text { font-size: 44rpx; color: var(--accent); line-height: 1; margin-top: -2rpx; }
+    .nav-back-icon { width: 44rpx; height: 44rpx; }
   }
 
   .nav-title {

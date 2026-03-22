@@ -7,6 +7,8 @@ const TAG = 'WebSocket'
 const REQUEST_TIMEOUT = 30000
 const MAX_RECONNECT_ATTEMPTS = 5
 const RECONNECT_BASE_DELAY = 1000
+// 后端每 30s 发一次 tick，超过 70s 没收到则认为连接已断
+const TICK_TIMEOUT = 70000
 
 interface PendingRequest {
   resolve: (value: unknown) => void
@@ -28,6 +30,7 @@ export class WebSocketManager {
   private destroyed = false
   private authFailed = false  // 认证失败，禁止重连
   private _status: ConnectionStatus = 'disconnected'
+  private tickTimer: ReturnType<typeof setTimeout> | null = null
 
   get status(): ConnectionStatus {
     return this._status
@@ -40,6 +43,24 @@ export class WebSocketManager {
     this.authFailed = false
     this._status = 'connecting'
     return this._connect()
+  }
+
+  private _resetTickTimer(): void {
+    if (this.tickTimer) clearTimeout(this.tickTimer)
+    this.tickTimer = setTimeout(() => {
+      if (this._status === 'connected' && !this.destroyed) {
+        logger.warn(TAG, `no tick received in ${TICK_TIMEOUT}ms, assuming connection is dead`)
+        this.ws?.close({})
+        this.ws = null
+      }
+    }, TICK_TIMEOUT)
+  }
+
+  private _clearTickTimer(): void {
+    if (this.tickTimer) {
+      clearTimeout(this.tickTimer)
+      this.tickTimer = null
+    }
   }
 
   private _connect(): Promise<void> {
@@ -69,6 +90,8 @@ export class WebSocketManager {
         this._sendHandshake()
           .then(() => {
             logger.info(TAG, 'handshake successful')
+            // 握手成功后启动 tick 超时检测
+            this._resetTickTimer()
             // 握手成功后清除敏感字段
             if (this.auth) {
               delete (this.auth as Record<string, unknown>).password
@@ -85,7 +108,6 @@ export class WebSocketManager {
             }
             this.ws?.close({})
             this.ws = null
-            // 握手成功后清除敏感字段
             if (this.auth) {
               delete (this.auth as Record<string, unknown>).password
             }
@@ -104,6 +126,7 @@ export class WebSocketManager {
 
       this.ws.onClose(() => {
         logger.warn(TAG, 'connection closed')
+        this._clearTickTimer()
         this._status = 'disconnected'
         if (!this.destroyed && !this.reconnecting && !this.authFailed) this._scheduleReconnect()
       })
@@ -196,6 +219,7 @@ export class WebSocketManager {
 
   disconnect(): void {
     this.destroyed = true
+    this._clearTickTimer()
     this._status = 'disconnected'
     this.ws?.close({})
     this.ws = null
@@ -204,6 +228,7 @@ export class WebSocketManager {
 
   private _send(data: unknown): void {
     try {
+      console.log('[WS ↑]', data)
       this.ws?.send({ data: JSON.stringify(data) })
     } catch (e) {
       logger.error(TAG, 'send failed', e)
@@ -211,7 +236,7 @@ export class WebSocketManager {
   }
 
   private _handleMessage(data: Record<string, unknown>): void {
-    logger.debug(TAG, 'received message:', data)
+    console.log('[WS ↓]', data)
 
     // RPC 响应：{type:"res", id, ok, payload|error}
     if (data['type'] === 'res' && data['id'] !== undefined) {
@@ -234,7 +259,12 @@ export class WebSocketManager {
     if (data['type'] === 'event' && data['event']) {
       const event = data['event'] as string
       const payload = data['payload']
-      logger.debug(TAG, `event received: ${event}`, payload)
+
+      // 收到 tick 则重置心跳超时计时器
+      if (event === 'tick') {
+        this._resetTickTimer()
+      }
+
       const handlers = this.handlers.get(event)
       if (handlers) handlers.forEach(h => h(payload))
     }

@@ -32,7 +32,10 @@ export const useUserStore = defineStore('user', () => {
   async function autoLogin(): Promise<boolean> {
     const saved = storage.get<string>('auth_token')
     const url = storage.get<string>('instance_url')
-    if (!saved || !url) return false
+    if (!saved || !url) {
+      uni.reLaunch({ url: '/pages/auth/login' })
+      return false
+    }
     try {
       await loginWithToken(url, saved)
       return true

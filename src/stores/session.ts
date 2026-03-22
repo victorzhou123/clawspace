@@ -29,6 +29,7 @@ export const useSessionStore = defineStore('session', () => {
   const currentSessionId = ref<string | null>(null)
 
   async function fetchSessions() {
+    if (loading.value) return
     const connected = await waitForConnected()
     if (!connected) {
       logger.warn(TAG, 'fetchSessions skipped: WebSocket not connected')
