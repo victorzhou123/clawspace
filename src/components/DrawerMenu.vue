@@ -80,7 +80,9 @@ async function onNewSession() {
           const key = `agent:${agentId}:dashboard:${timestamp}`
           const label = `新会话-${new Date(timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}`
           await sessionsReset(key)
-          await sessionsPatch(key, { label })
+          const patchData: { label: string; model?: string } = { label }
+          if (agent.model) patchData.model = agent.model
+          await sessionsPatch(key, patchData)
           await sessionStore.fetchSessions()
           sessionStore.setCurrentSession(key)
           close()
