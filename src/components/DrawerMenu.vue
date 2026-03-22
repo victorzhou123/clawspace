@@ -46,7 +46,7 @@ import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
 import { useTheme } from '@/composables/useTheme'
 import { agentsList } from '@/api/agents'
-import { sessionsPatch, sessionsReset } from '@/api/sessions'
+import { sessionsPatch } from '@/api/sessions'
 import type { Agent } from '@/types/agent'
 import { onVibrate } from '@/utils/haptic'
 
@@ -79,7 +79,6 @@ async function onNewSession() {
           const timestamp = Date.now()
           const key = `agent:${agentId}:dashboard:${timestamp}`
           const label = `新会话-${new Date(timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}`
-          await sessionsReset(key)
           const patchData: { label: string; model?: string } = { label }
           if (agent.model) patchData.model = agent.model
           await sessionsPatch(key, patchData)
