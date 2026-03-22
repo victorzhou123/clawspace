@@ -76,8 +76,10 @@ async function onNewSession() {
         try {
           const agent = agents[tapIndex]
           const agentId = agent.id ?? agent.agentId
-          const key = `agent:${agentId}:dashboard:${Date.now()}`
-          await sessionsPatch(key, { label: `新会话 - ${agent.name}` })
+          const timestamp = Date.now()
+          const key = `agent:${agentId}:dashboard:${timestamp}`
+          const label = `新会话-${new Date(timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}`
+          await sessionsPatch(key, { label })
           await sessionsReset(key)
           await sessionStore.fetchSessions()
           sessionStore.setCurrentSession(key)
