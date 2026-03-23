@@ -134,6 +134,9 @@ export const useChatStore = defineStore('chat', () => {
             isStreaming: false,
             status: 'sent',
           }
+        } else {
+          // 没有收到 delta 事件，重新加载历史消息
+          loadHistory(sessionKey).catch(e => logger.error(TAG, 'loadHistory on final failed', e))
         }
       } else if (state === 'aborted' || state === 'error') {
         streaming.value = false
