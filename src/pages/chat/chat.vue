@@ -368,10 +368,10 @@ async function onAbort() {
 
 .input-bar {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 16rpx;
   padding: 16rpx 24rpx;
-  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
   background: var(--nav-bg);
   border-top: 1rpx solid var(--nav-border);
   flex-shrink: 0;
@@ -379,7 +379,7 @@ async function onAbort() {
 
 .input {
   flex: 1;
-  min-height: 72rpx;
+  height: 72rpx;
   max-height: 200rpx;
   background: var(--input-bg);
   border-radius: 16rpx;
@@ -387,6 +387,7 @@ async function onAbort() {
   font-size: 30rpx;
   line-height: 1.5;
   color: var(--input-text);
+  box-sizing: border-box;
 }
 
 .btn-action {
