@@ -1,6 +1,12 @@
 <template>
   <view v-if="visible" class="drawer-mask" @tap="close" />
-  <view class="drawer" :class="[visible ? 'drawer-open' : 'drawer-closed', themeClass]">
+  <view
+    class="drawer"
+    :class="[visible ? 'drawer-open' : 'drawer-closed', themeClass]"
+    @touchstart="onTouchStart"
+    @touchmove="onTouchMove"
+    @touchend="onTouchEnd"
+  >
     <view class="drawer-header">
       <view class="user-avatar">
         <text class="avatar-text">{{ userInitial }}</text>
@@ -17,7 +23,16 @@
 
     <view class="section-title">会话</view>
     <view class="session-list-wrapper">
-      <scroll-view scroll-y class="session-list" refresher-enabled :refresher-triggered="sessionLoading" @refresherrefresh="onRefreshSessions">
+      <scroll-view
+        scroll-y
+        scroll-x="false"
+        class="session-list"
+        refresher-enabled
+        :refresher-triggered="refreshing"
+        :refresher-background="refresherBackground"
+        refresher-default-style="white"
+        @refresherrefresh="onRefreshSessions"
+      >
         <view v-if="sessions.length === 0 && !sessionLoading" class="empty-tip">
           <text>暂无会话</text>
         </view>
@@ -45,6 +60,7 @@ import { useUserStore } from '@/stores/user'
 import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
 import { useTheme } from '@/composables/useTheme'
+import { useRefresher } from '@/composables/useRefresher'
 import { agentsList } from '@/api/agents'
 import { sessionsPatch } from '@/api/sessions'
 import type { Agent } from '@/types/agent'
@@ -57,9 +73,41 @@ const userStore = useUserStore()
 const sessionStore = useSessionStore()
 const chatStore = useChatStore()
 const { instanceUrl } = storeToRefs(userStore)
-const { sessions, loading: sessionLoading, currentSessionId } = storeToRefs(sessionStore)
+const { sessions, loading: sessionLoading } = storeToRefs(sessionStore)
 const { themeClass } = useTheme()
+const { refresherBackground } = useRefresher()
 const creatingSession = ref(false)
+const refreshing = ref(false)
+
+let touchStartX = 0
+let touchStartY = 0
+let isHorizontalSwipe = false
+
+function onTouchStart(e: TouchEvent) {
+  touchStartX = e.touches[0].clientX
+  touchStartY = e.touches[0].clientY
+  isHorizontalSwipe = false
+}
+
+function onTouchMove(e: TouchEvent) {
+  const deltaX = e.touches[0].clientX - touchStartX
+  const deltaY = Math.abs(e.touches[0].clientY - touchStartY)
+  const absDeltaX = Math.abs(deltaX)
+
+  if (absDeltaX > 10 && absDeltaX > deltaY) {
+    isHorizontalSwipe = true
+  }
+
+  if (isHorizontalSwipe && deltaX < -50) {
+    close()
+  }
+}
+
+function onTouchEnd() {
+  touchStartX = 0
+  touchStartY = 0
+  isHorizontalSwipe = false
+}
 
 async function onNewSession() {
   try {
@@ -110,7 +158,12 @@ const userInitial = computed(() => userName.value.charAt(0).toUpperCase())
 function close() { emit('close') }
 
 async function onRefreshSessions() {
+  refreshing.value = true
+  const start = Date.now()
   await sessionStore.fetchSessions().catch(() => {})
+  const elapsed = Date.now() - start
+  if (elapsed < 500) await new Promise(resolve => setTimeout(resolve, 500 - elapsed))
+  refreshing.value = false
 }
 
 function selectSession(key: string) {
@@ -229,7 +282,15 @@ function formatTime(ts: number | null): string {
   letter-spacing: 2rpx;
 }
 
-.session-list { flex: 1; min-height: 0; }
+.session-list-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.session-list {
+  height: 100%;
+}
 
 .empty-tip {
   padding: 48rpx 32rpx;
@@ -263,7 +324,15 @@ function formatTime(ts: number | null): string {
   height: 72rpx;
   border-radius: 16rpx;
   border: 1rpx dashed var(--border-color);
-  &:active { background: var(--bg-tertiary); }
+  &:active { opacity: 0.7; }
+}
+
+.drawer.theme-dark .new-session-btn {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.drawer.theme-light .new-session-btn {
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .new-session-icon {

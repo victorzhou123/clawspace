@@ -11,10 +11,11 @@
       class="list"
       scroll-y
       refresher-enabled
-      :refresher-triggered="loading"
+      :refresher-triggered="refreshing"
+      :refresher-background="refresherBackground"
       @refresherrefresh="onRefresh"
     >
-      <view v-if="!loading && sessions.length === 0" class="empty">
+      <view v-if="!refreshing && sessions.length === 0" class="empty">
         <text class="empty-text">暂无会话，去聊天开始吧</text>
       </view>
 
@@ -38,17 +39,21 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
 import { useTheme } from '@/composables/useTheme'
+import { useRefresher } from '@/composables/useRefresher'
 
 const sessionStore = useSessionStore()
 const chatStore = useChatStore()
-const { sessions, loading } = storeToRefs(sessionStore)
+const { sessions } = storeToRefs(sessionStore)
 const { themeClass, theme } = useTheme()
+const { refresherBackground } = useRefresher()
+const refreshing = ref(false)
 
 onLoad(() => { guardAuth() })
 
@@ -57,7 +62,12 @@ onShow(async () => {
 })
 
 async function onRefresh() {
+  refreshing.value = true
+  const start = Date.now()
   await sessionStore.fetchSessions().catch(() => {})
+  const elapsed = Date.now() - start
+  if (elapsed < 500) await new Promise(resolve => setTimeout(resolve, 500 - elapsed))
+  refreshing.value = false
 }
 
 function openSession(key: string) {

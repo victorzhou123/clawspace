@@ -11,7 +11,8 @@
       scroll-y
       class="content"
       refresher-enabled
-      :refresher-triggered="loading"
+      :refresher-triggered="refreshing"
+      :refresher-background="refresherBackground"
       @refresherrefresh="onRefresh"
     >
       <!-- 健康状态 -->
@@ -113,16 +114,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useMonitorStore } from '@/stores/monitor'
 import { useTheme } from '@/composables/useTheme'
+import { useRefresher } from '@/composables/useRefresher'
 
 const monitorStore = useMonitorStore()
-const { healthData, statusData, usageData, loading } = storeToRefs(monitorStore)
+const { healthData, statusData, usageData } = storeToRefs(monitorStore)
 const { themeClass, theme } = useTheme()
+const { refresherBackground } = useRefresher()
+const refreshing = ref(false)
 
 const healthOk = computed(() => healthData.value?.ok === true)
 const healthTime = computed(() => {
@@ -144,7 +148,12 @@ onShow(async () => {
 })
 
 async function onRefresh() {
+  refreshing.value = true
+  const start = Date.now()
   await monitorStore.fetchAll(true).catch(() => {})
+  const elapsed = Date.now() - start
+  if (elapsed < 500) await new Promise(resolve => setTimeout(resolve, 500 - elapsed))
+  refreshing.value = false
 }
 
 function progressColor(pct: number) {

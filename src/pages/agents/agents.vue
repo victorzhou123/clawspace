@@ -13,10 +13,11 @@
       class="list"
       scroll-y
       refresher-enabled
-      :refresher-triggered="loading"
+      :refresher-triggered="refreshing"
+      :refresher-background="refresherBackground"
       @refresherrefresh="onRefresh"
     >
-      <view v-if="!loading && agents.length === 0" class="empty">
+      <view v-if="!refreshing && agents.length === 0" class="empty">
         <text class="empty-text">暂无 Agent，点击右上角新建</text>
       </view>
 
@@ -46,16 +47,20 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useAgentStore } from '@/stores/agent'
 import type { Agent } from '@/types/agent'
 import { useTheme } from '@/composables/useTheme'
+import { useRefresher } from '@/composables/useRefresher'
 
 const agentStore = useAgentStore()
-const { agents, loading } = storeToRefs(agentStore)
+const { agents } = storeToRefs(agentStore)
 const { themeClass, theme } = useTheme()
+const { refresherBackground } = useRefresher()
+const refreshing = ref(false)
 
 onLoad(() => { guardAuth() })
 
@@ -64,7 +69,12 @@ onShow(async () => {
 })
 
 async function onRefresh() {
-  await agentStore.fetchAgents().catch(() => {})
+  refreshing.value = true
+  const start = Date.now()
+  await agentStore.fetchAgents(true).catch(() => {})
+  const elapsed = Date.now() - start
+  if (elapsed < 500) await new Promise(resolve => setTimeout(resolve, 500 - elapsed))
+  refreshing.value = false
 }
 
 function goDetail(agent: Agent) {

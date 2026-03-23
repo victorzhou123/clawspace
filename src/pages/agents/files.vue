@@ -9,7 +9,7 @@
     </view>
     <!-- 文件列表 -->
     <template v-if="!editingFile">
-      <scroll-view scroll-y class="list" refresher-enabled :refresher-triggered="loading" @refresherrefresh="onRefresh">
+      <scroll-view scroll-y class="list" refresher-enabled :refresher-triggered="refreshing" :refresher-background="refresherBackground" @refresherrefresh="onRefresh">
         <view v-if="!loading && files.length === 0" class="empty">
           <text class="empty-text">暂无文件</text>
         </view>
@@ -61,12 +61,15 @@ import { guardAuth } from '@/utils/guard'
 import { agentsFilesList, agentsFilesGet, agentsFilesSet } from '@/api/agents'
 import type { AgentFileEntry } from '@/api/agents'
 import { useTheme } from '@/composables/useTheme'
+import { useRefresher } from '@/composables/useRefresher'
 
 const { themeClass, theme } = useTheme()
+const { refresherBackground } = useRefresher()
 
 const agentId = ref('')
 const files = ref<AgentFileEntry[]>([])
 const loading = ref(false)
+const refreshing = ref(false)
 const editingFile = ref<string | null>(null)
 const fileContent = ref('')
 const loadingFile = ref(false)
@@ -93,7 +96,12 @@ async function fetchFiles() {
 }
 
 async function onRefresh() {
+  refreshing.value = true
+  const start = Date.now()
   await fetchFiles()
+  const elapsed = Date.now() - start
+  if (elapsed < 500) await new Promise(resolve => setTimeout(resolve, 500 - elapsed))
+  refreshing.value = false
 }
 
 async function openFile(name: string) {

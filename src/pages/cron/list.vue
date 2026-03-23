@@ -11,7 +11,8 @@
       scroll-y
       class="list"
       refresher-enabled
-      :refresher-triggered="loading"
+      :refresher-triggered="refreshing"
+      :refresher-background="refresherBackground"
       @refresherrefresh="onRefresh"
     >
       <view v-if="!loading && jobs.length === 0" class="empty">
@@ -60,11 +61,14 @@ import { guardAuth } from '@/utils/guard'
 import { cronList } from '@/api/cron'
 import type { CronJob, CronSchedule } from '@/types/cron'
 import { useTheme } from '@/composables/useTheme'
+import { useRefresher } from '@/composables/useRefresher'
 
 const { themeClass, theme } = useTheme()
+const { refresherBackground } = useRefresher()
 
 const jobs = ref<CronJob[]>([])
 const loading = ref(false)
+const refreshing = ref(false)
 
 onLoad(() => { guardAuth() })
 onShow(async () => { await fetchJobs() })
@@ -82,7 +86,12 @@ async function fetchJobs() {
 }
 
 async function onRefresh() {
+  refreshing.value = true
+  const start = Date.now()
   await fetchJobs()
+  const elapsed = Date.now() - start
+  if (elapsed < 500) await new Promise(resolve => setTimeout(resolve, 500 - elapsed))
+  refreshing.value = false
 }
 
 function goDetail(id: string) {
