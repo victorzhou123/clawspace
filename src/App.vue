@@ -2,6 +2,10 @@
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
 import { useUserStore } from "@/stores/user";
 import { WHITE_LIST } from "@/utils/guard";
+import { wsManager } from "@/utils/websocket-manager";
+import { logger } from "@/utils/logger";
+
+const TAG = 'App';
 
 onLaunch(async () => {
   const userStore = useUserStore();
@@ -19,7 +23,15 @@ onLaunch(async () => {
 
   await userStore.autoLogin().catch(() => {});
 });
-onShow(() => {});
+
+onShow(() => {
+  const userStore = useUserStore();
+  if (userStore.isAuthenticated && wsManager.status !== 'connected') {
+    logger.info(TAG, 'app resumed, reconnecting...');
+    userStore.autoLogin().catch(() => {});
+  }
+});
+
 onHide(() => {});
 </script>
 <style lang="scss">
