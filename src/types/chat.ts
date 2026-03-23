@@ -1,18 +1,40 @@
 // 聊天相关类型
 
-export type MessageRole = 'user' | 'assistant' | 'system' | 'tool'
+export type MessageRole = 'user' | 'assistant' | 'system' | 'tool' | 'toolResult'
 
 export type MessageStatus = 'sending' | 'sent' | 'error'
+
+export type ContentPart = TextContent | ThinkingContent | ToolCallContent
+
+export interface TextContent {
+  type: 'text'
+  text: string
+}
+
+export interface ThinkingContent {
+  type: 'thinking'
+  thinking: string
+}
+
+export interface ToolCallContent {
+  type: 'toolCall'
+  id: string
+  name: string
+  arguments: unknown
+}
 
 export interface Message {
   id: string
   role: MessageRole
-  /** 当前仅支持纯文本，后续如需多模态（图片/文件）需扩展为 string | ContentPart[] */
-  content: string
+  content: string | ContentPart[]
   timestamp: number
   isStreaming?: boolean
+  isLoading?: boolean
   status?: MessageStatus
   toolCalls?: ToolCall[]
+  toolCallId?: string
+  toolName?: string
+  isError?: boolean
 }
 
 export interface ToolCall {

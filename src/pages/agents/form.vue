@@ -63,7 +63,7 @@
     <view class="footer">
       <button
         class="btn-save"
-        :disabled="!form.name.trim() || saving"
+        :disabled="!form.name?.trim() || saving"
         @tap="onSave"
       >{{ saving ? '保存中...' : '保存' }}</button>
     </view>
@@ -117,7 +117,7 @@ onLoad(async (options) => {
       await agentStore.fetchAgents()
       const agent = agentStore.agents.find(a => a.id === agentId.value)
       if (!agent) throw new Error('not found')
-      form.name = agent.name
+      form.name = agent.name ?? ''
       form.description = agent.description ?? ''
       form.model = agent.model ?? ''
       form.systemPrompt = agent.systemPrompt ?? ''
@@ -159,6 +159,10 @@ async function onSave() {
     }
 
     uni.navigateBack()
+    // 1 秒后重新获取 agent 列表
+    setTimeout(() => {
+      agentStore.fetchAgents().catch(() => {})
+    }, 1000)
   } catch {
     uni.showToast({ title: '保存失败', icon: 'none' })
   } finally {

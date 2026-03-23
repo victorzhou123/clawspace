@@ -58,7 +58,9 @@
               :role="msg.role"
               :content="msg.content"
               :is-streaming="msg.isStreaming"
+              :is-loading="msg.isLoading"
               :is-error="msg.status === 'error'"
+              :tool-name="msg.toolName"
             />
           </view>
 
