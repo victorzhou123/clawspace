@@ -97,7 +97,7 @@ test.describe('登录模块', () => {
   test('12 - 样式和布局完整性', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('.app-name')).toHaveText('clawspace');
-    await expect(page.locator('.app-desc')).toHaveText('OpenClaw AI Assistant');
+    await expect(page.locator('.app-desc')).toHaveText('你的openclaw助手面板');
     await expect(page.locator('.btn-primary')).toHaveCSS('background', /rgb\(0, 122, 255\)/);
   });
 
