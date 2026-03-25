@@ -1,14 +1,20 @@
 <script setup lang="ts">
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
 import { useUserStore } from "@/stores/user";
+import { useInstanceStore } from "@/stores/instance";
 import { WHITE_LIST } from "@/utils/guard";
 import { wsManager } from "@/utils/websocket-manager";
 import { logger } from "@/utils/logger";
 
 const TAG = 'App';
+let isFirstLaunch = true;
 
 onLaunch(async () => {
   const userStore = useUserStore();
+  const instanceStore = useInstanceStore();
+
+  // 迁移旧的登录数据到实例管理系统
+  instanceStore.initFromLegacyStorage();
 
   const checkAuth = (options: { url: string }) => {
     const path = options.url.split("?")[0];
@@ -25,6 +31,11 @@ onLaunch(async () => {
 });
 
 onShow(() => {
+  if (isFirstLaunch) {
+    isFirstLaunch = false;
+    return;
+  }
+
   const userStore = useUserStore();
   if (userStore.isAuthenticated && wsManager.status !== 'connected') {
     logger.info(TAG, 'app resumed, reconnecting...');

@@ -27,24 +27,31 @@ export const useSessionStore = defineStore('session', () => {
   const loading = ref(false)
   // 当前选中的 sessionKey
   const currentSessionId = ref<string | null>(null)
+  let fetchPromise: Promise<void> | null = null
 
   async function fetchSessions() {
-    if (loading.value) return
+    if (loading.value && fetchPromise) return fetchPromise
     loading.value = true
-    try {
-      const connected = await waitForConnected()
-      if (!connected) {
-        logger.warn(TAG, 'fetchSessions skipped: WebSocket not connected')
-        return
+
+    fetchPromise = (async () => {
+      try {
+        const connected = await waitForConnected()
+        if (!connected) {
+          logger.warn(TAG, 'fetchSessions skipped: WebSocket not connected')
+          return
+        }
+        const result = await sessionsList({ limit: 50, includeDerivedTitles: true, includeLastMessage: true })
+        sessions.value = result.sessions ?? []
+      } catch (e) {
+        logger.error(TAG, 'fetchSessions failed', e)
+        throw e
+      } finally {
+        loading.value = false
+        fetchPromise = null
       }
-      const result = await sessionsList({ limit: 50, includeDerivedTitles: true, includeLastMessage: true })
-      sessions.value = result.sessions ?? []
-    } catch (e) {
-      logger.error(TAG, 'fetchSessions failed', e)
-      throw e
-    } finally {
-      loading.value = false
-    }
+    })()
+
+    return fetchPromise
   }
 
   async function deleteSession(key: string) {

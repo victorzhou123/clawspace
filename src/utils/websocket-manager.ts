@@ -31,18 +31,27 @@ export class WebSocketManager {
   private authFailed = false  // 认证失败，禁止重连
   private _status: ConnectionStatus = 'disconnected'
   private tickTimer: ReturnType<typeof setTimeout> | null = null
+  private connectPromise: Promise<void> | null = null
 
   get status(): ConnectionStatus {
     return this._status
   }
 
   async connect(url: string, auth: AuthConfig): Promise<void> {
+    if (this.connectPromise) return this.connectPromise
+    if (this._status === 'connected') return Promise.resolve()
+
     this.url = url
     this.auth = auth
     this.destroyed = false
     this.authFailed = false
     this._status = 'connecting'
-    return this._connect()
+
+    this.connectPromise = this._connect().finally(() => {
+      this.connectPromise = null
+    })
+
+    return this.connectPromise
   }
 
   private _resetTickTimer(): void {
@@ -81,8 +90,7 @@ export class WebSocketManager {
 
       this.ws.onOpen(() => {
         clearTimeout(connectTimeout)
-        logger.info(TAG, 'connected')
-        this._status = 'connected'
+        logger.info(TAG, 'socket opened, sending handshake...')
         this.reconnectAttempts = 0
         this.reconnecting = false
 
@@ -90,6 +98,7 @@ export class WebSocketManager {
         this._sendHandshake()
           .then(() => {
             logger.info(TAG, 'handshake successful')
+            this._status = 'connected'
             // 握手成功后启动 tick 超时检测
             this._resetTickTimer()
             // 握手成功后清除敏感字段
