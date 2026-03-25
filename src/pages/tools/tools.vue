@@ -1,7 +1,7 @@
 <template>
   <view class="tools-page" :class="themeClass">
     <view class="nav-bar">
-      <view class="nav-back" @tap="() => uni.navigateBack()">
+      <view class="nav-back" @tap="() => { onVibrate(); uni.navigateBack(); }">
         <image class="nav-back-icon" :src="theme === 'dark' ? '/static/icon/back-light.svg' : '/static/icon/back-dark.svg'" mode="aspectFit" />
       </view>
       <text class="nav-title">工具目录</text>
@@ -49,6 +49,7 @@ import { guardAuth } from '@/utils/guard'
 import { useToolsStore } from '@/stores/tools'
 import { useTheme } from '@/composables/useTheme'
 import { useRefresher } from '@/composables/useRefresher'
+import { onVibrate } from '@/utils/haptic'
 
 const toolsStore = useToolsStore()
 const { groups } = storeToRefs(toolsStore)
@@ -96,7 +97,7 @@ async function onRefresh() {
     width: 60rpx;
     display: flex;
     align-items: center;
-    .nav-back-icon { width: 44rpx; height: 44rpx; }
+    .nav-back-icon { width: 66rpx; height: 66rpx; }
   }
 
   .nav-title {
@@ -110,6 +111,7 @@ async function onRefresh() {
 
 .content {
   flex: 1;
+  height: 0;
 }
 
 .empty {

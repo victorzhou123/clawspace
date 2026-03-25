@@ -19,6 +19,12 @@
           <text class="user-status">已登录</text>
           <text v-if="instanceUrl" class="user-instance">{{ instanceUrl }}</text>
         </view>
+        <view class="switch-btn" @tap="goToInstances">
+          <image class="switch-icon" :src="theme === 'dark' ? '/static/icon/switch-light.svg' : '/static/icon/switch-dark.svg'" mode="aspectFit" />
+        </view>
+      </view>
+      <view class="instance-tip">
+        <text class="tip-text">点击右侧图标可切换实例</text>
       </view>
 
       <!-- 设置项 -->
@@ -77,6 +83,7 @@ import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useUserStore } from '@/stores/user'
 import { useTheme } from '@/composables/useTheme'
+import { onVibrate } from '@/utils/haptic'
 
 const userStore = useUserStore()
 const { instanceUrl } = storeToRefs(userStore)
@@ -161,6 +168,11 @@ function goCron() {
   uni.navigateTo({ url: '/pages/cron/list' })
 }
 
+function goToInstances() {
+  onVibrate()
+  uni.navigateTo({ url: '/pages/instances/list' })
+}
+
 function checkUpdate() {
   uni.showToast({ title: '已是最新版本', icon: 'none' })
 }
@@ -201,7 +213,7 @@ function confirmLogout() {
     width: 60rpx;
     display: flex;
     align-items: center;
-    .nav-back-icon { width: 44rpx; height: 44rpx; }
+    .nav-back-icon { width: 66rpx; height: 66rpx; }
   }
 
   .nav-title {
@@ -213,7 +225,10 @@ function confirmLogout() {
   }
 }
 
-.content { flex: 1; }
+.content {
+  flex: 1;
+  height: 0;
+}
 
 .card {
   margin: 24rpx;
@@ -223,6 +238,34 @@ function confirmLogout() {
 }
 
 .user-card { display: flex; align-items: center; gap: 24rpx; }
+
+.switch-btn {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &:active {
+    opacity: 0.6;
+  }
+
+  .switch-icon {
+    width: 38rpx;
+    height: 38rpx;
+  }
+}
+
+.instance-tip {
+  margin: 0 24rpx 8rpx;
+  padding: 0 8rpx;
+
+  .tip-text {
+    font-size: 24rpx;
+    color: var(--text-tertiary);
+  }
+}
 
 .user-avatar {
   width: 100rpx;
