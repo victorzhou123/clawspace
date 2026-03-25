@@ -40,15 +40,29 @@
           v-for="s in sessions" :key="s.key"
           class="session-item" :class="s.key === currentSessionId ? 'session-active' : ''"
           @tap="selectSession(s.key)"
-          @longpress="onSessionLongPress(s.key, s.key || s.label || s.derivedTitle || '')"
+          @longpress="onSessionLongPress($event, s.key, s.label || s.derivedTitle || s.displayName || s.key || '')"
         >
           <view class="session-item-inner">
-            <text class="session-title">{{ s.key || s.label || s.derivedTitle || s.displayName }}</text>
+            <text class="session-title">{{ s.label || s.derivedTitle || s.displayName || s.key }}</text>
             <text class="session-preview">{{ s.lastMessagePreview || '暂无消息' }}</text>
           </view>
           <text class="session-time">{{ formatTime(s.updatedAt) }}</text>
         </view>
       </scroll-view>
+    </view>
+
+    <view v-if="menuVisible" class="menu-overlay" @tap="closeMenu">
+      <view class="context-menu" :style="{ top: menuTop + 'px', left: menuLeft + 'px' }" @tap.stop>
+        <view class="menu-item" @tap="handleMenuAction('rename')">
+          <text class="menu-text">重命名</text>
+        </view>
+        <view class="menu-item" @tap="handleMenuAction('reset')">
+          <text class="menu-text">重置会话</text>
+        </view>
+        <view class="menu-item" @tap="handleMenuAction('delete')">
+          <text class="menu-text danger">删除会话</text>
+        </view>
+      </view>
     </view>
   </view>
 </template>
@@ -73,11 +87,16 @@ const userStore = useUserStore()
 const sessionStore = useSessionStore()
 const chatStore = useChatStore()
 const { instanceUrl } = storeToRefs(userStore)
-const { sessions, loading: sessionLoading } = storeToRefs(sessionStore)
+const { sessions, loading: sessionLoading, currentSessionId } = storeToRefs(sessionStore)
 const { themeClass } = useTheme()
 const { refresherBackground } = useRefresher()
 const creatingSession = ref(false)
 const refreshing = ref(false)
+const menuVisible = ref(false)
+const menuTop = ref(0)
+const menuLeft = ref(0)
+const selectedSession = ref({ key: '', title: '' })
+const menuClickable = ref(false)
 
 let touchStartX = 0
 let touchStartY = 0
@@ -172,15 +191,31 @@ function selectSession(key: string) {
   close()
 }
 
-function onSessionLongPress(key: string, title: string) {
-  uni.showActionSheet({
-    itemList: ['重命名', '重置会话', '删除会话'],
-    success: ({ tapIndex }) => {
-      if (tapIndex === 0) confirmRename(key, title)
-      else if (tapIndex === 1) confirmReset(key)
-      else if (tapIndex === 2) confirmDelete(key)
-    },
-  })
+function onSessionLongPress(e: any, key: string, title: string) {
+  onVibrate()
+  selectedSession.value = { key, title }
+  const { clientX, clientY } = e.touches?.[0] || e.changedTouches?.[0] || { clientX: 0, clientY: 0 }
+  menuLeft.value = clientX
+  menuTop.value = clientY
+  menuVisible.value = true
+  menuClickable.value = false
+  setTimeout(() => {
+    menuClickable.value = true
+  }, 250)
+}
+
+function closeMenu() {
+  menuVisible.value = false
+  menuClickable.value = false
+}
+
+function handleMenuAction(action: 'rename' | 'reset' | 'delete') {
+  if (!menuClickable.value) return
+  closeMenu()
+  const { key, title } = selectedSession.value
+  if (action === 'rename') confirmRename(key, title)
+  else if (action === 'reset') confirmReset(key)
+  else if (action === 'delete') confirmDelete(key)
 }
 
 function confirmRename(key: string, currentTitle: string) {
@@ -209,7 +244,18 @@ function confirmDelete(key: string) {
   uni.showModal({
     title: '删除会话', content: '删除后无法恢复，确认删除？',
     success: async (res) => {
-      if (res.confirm) await sessionStore.deleteSession(key).catch(() => {})
+      if (res.confirm) {
+        try {
+          await sessionStore.deleteSession(key)
+        } catch (e: any) {
+          const msg = e?.message || ''
+          if (msg.includes('Cannot delete the main session') || msg.includes('main session')) {
+            uni.showToast({ title: '主会话无法删除', icon: 'none' })
+          } else {
+            uni.showToast({ title: '删除失败', icon: 'none' })
+          }
+        }
+      }
     },
   })
 }
@@ -355,5 +401,46 @@ function formatTime(ts: number | null): string {
   &:active { background: var(--bg-tertiary); }
   .nav-icon { font-size: 36rpx; width: 48rpx; text-align: center; }
   .nav-label { font-size: 30rpx; color: var(--text-primary); }
+}
+
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1001;
+}
+
+.context-menu {
+  position: fixed;
+  background: var(--bg-card);
+  border-radius: 12rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  transform: translate(-50%, -100%) translateY(-20rpx);
+  min-width: 200rpx;
+}
+
+.menu-item {
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid var(--border-color);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:active {
+    background: var(--bg-tertiary);
+  }
+}
+
+.menu-text {
+  font-size: 28rpx;
+  color: var(--text-primary);
+
+  &.danger {
+    color: #ff4d4f;
+  }
 }
 </style>

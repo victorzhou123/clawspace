@@ -1,7 +1,7 @@
 <template>
   <view class="sessions-page" :class="themeClass">
     <view class="nav-bar">
-      <view class="nav-back" @tap="() => uni.navigateBack()">
+      <view class="nav-back" @tap="() => { onVibrate(); uni.navigateBack(); }">
         <image class="nav-back-icon" :src="theme === 'dark' ? '/static/icon/back-light.svg' : '/static/icon/back-dark.svg'" mode="aspectFit" />
       </view>
       <text class="nav-title">会话列表</text>
@@ -24,10 +24,10 @@
         :key="session.key"
         class="session-item"
         @tap="openSession(session.key)"
-        @longpress="onLongPress(session.key, session.key || session.label || session.derivedTitle || '')"
+        @longpress="onLongPress($event, session.key, session.label || session.derivedTitle || session.displayName || session.key || '')"
       >
         <view class="session-info">
-          <text class="session-title">{{ session.key || session.label || session.derivedTitle || session.displayName }}</text>
+          <text class="session-title">{{ session.label || session.derivedTitle || session.displayName || session.key }}</text>
           <text class="session-preview">{{ session.lastMessagePreview || '暂无消息' }}</text>
         </view>
         <view class="session-meta">
@@ -35,6 +35,20 @@
         </view>
       </view>
     </scroll-view>
+
+    <view v-if="menuVisible" class="menu-overlay" @tap="closeMenu">
+      <view class="context-menu" :style="{ top: menuTop + 'px', left: menuLeft + 'px' }" @tap.stop>
+        <view class="menu-item" @tap="handleMenuAction('rename')">
+          <text class="menu-text">重命名</text>
+        </view>
+        <view class="menu-item" @tap="handleMenuAction('reset')">
+          <text class="menu-text">重置会话</text>
+        </view>
+        <view class="menu-item" @tap="handleMenuAction('delete')">
+          <text class="menu-text danger">删除会话</text>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -47,6 +61,7 @@ import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
 import { useTheme } from '@/composables/useTheme'
 import { useRefresher } from '@/composables/useRefresher'
+import { onVibrate } from '@/utils/haptic'
 
 const sessionStore = useSessionStore()
 const chatStore = useChatStore()
@@ -54,6 +69,10 @@ const { sessions } = storeToRefs(sessionStore)
 const { themeClass, theme } = useTheme()
 const { refresherBackground } = useRefresher()
 const refreshing = ref(false)
+const menuVisible = ref(false)
+const menuTop = ref(0)
+const menuLeft = ref(0)
+const selectedSession = ref({ key: '', title: '' })
 
 onLoad(() => { guardAuth() })
 
@@ -75,15 +94,24 @@ function openSession(key: string) {
   uni.navigateBack()
 }
 
-function onLongPress(key: string, title: string) {
-  uni.showActionSheet({
-    itemList: ['重命名', '重置会话', '删除会话'],
-    success: ({ tapIndex }) => {
-      if (tapIndex === 0) confirmRename(key, title)
-      else if (tapIndex === 1) confirmReset(key)
-      else if (tapIndex === 2) confirmDelete(key)
-    },
-  })
+function onLongPress(e: any, key: string, title: string) {
+  selectedSession.value = { key, title }
+  const { clientX, clientY } = e.touches?.[0] || e.changedTouches?.[0] || { clientX: 0, clientY: 0 }
+  menuLeft.value = clientX
+  menuTop.value = clientY
+  menuVisible.value = true
+}
+
+function closeMenu() {
+  menuVisible.value = false
+}
+
+function handleMenuAction(action: 'rename' | 'reset' | 'delete') {
+  closeMenu()
+  const { key, title } = selectedSession.value
+  if (action === 'rename') confirmRename(key, title)
+  else if (action === 'reset') confirmReset(key)
+  else if (action === 'delete') confirmDelete(key)
 }
 
 function confirmRename(key: string, currentTitle: string) {
@@ -120,7 +148,16 @@ function confirmDelete(key: string) {
     content: '删除后无法恢复，确认删除？',
     success: async (res) => {
       if (res.confirm) {
-        await sessionStore.deleteSession(key).catch(() => {})
+        try {
+          await sessionStore.deleteSession(key)
+        } catch (e: any) {
+          const msg = e?.message || ''
+          if (msg.includes('Cannot delete the main session') || msg.includes('main session')) {
+            uni.showToast({ title: '主会话无法删除', icon: 'none' })
+          } else {
+            uni.showToast({ title: '删除失败', icon: 'none' })
+          }
+        }
       }
     },
   })
@@ -159,7 +196,7 @@ function formatTime(ts: number | null): string {
     width: 60rpx;
     display: flex;
     align-items: center;
-    .nav-back-icon { width: 44rpx; height: 44rpx; }
+    .nav-back-icon { width: 66rpx; height: 66rpx; }
   }
 
   .nav-title {
@@ -234,6 +271,47 @@ function formatTime(ts: number | null): string {
   .session-time {
     font-size: 24rpx;
     color: var(--text-tertiary);
+  }
+}
+
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.context-menu {
+  position: fixed;
+  background: var(--bg-card);
+  border-radius: 12rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  transform: translate(-50%, -100%) translateY(-20rpx);
+  min-width: 200rpx;
+}
+
+.menu-item {
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid var(--border-color);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:active {
+    background: var(--bg-tertiary);
+  }
+}
+
+.menu-text {
+  font-size: 28rpx;
+  color: var(--text-primary);
+
+  &.danger {
+    color: #ff4d4f;
   }
 }
 </style>
