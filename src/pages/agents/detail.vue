@@ -162,7 +162,7 @@ function confirmDelete() {
     width: 60rpx;
     display: flex;
     align-items: center;
-    .nav-back-icon { width: 44rpx; height: 44rpx; }
+    .nav-back-icon { width: 66rpx; height: 66rpx; }
   }
 
   .nav-title {

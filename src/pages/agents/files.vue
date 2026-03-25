@@ -179,7 +179,7 @@ function formatSize(size?: number): string {
     width: 60rpx;
     display: flex;
     align-items: center;
-    .nav-back-icon { width: 44rpx; height: 44rpx; }
+    .nav-back-icon { width: 66rpx; height: 66rpx; }
   }
 
   .nav-title {
@@ -240,6 +240,7 @@ function formatSize(size?: number): string {
 
 .editor-scroll {
   flex: 1;
+  min-height: 0;
   background: var(--bg-card);
 }
 
@@ -256,6 +257,7 @@ function formatSize(size?: number): string {
 
 .footer {
   display: flex;
+  flex-shrink: 0;
   gap: 24rpx;
   padding: 24rpx 32rpx;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
