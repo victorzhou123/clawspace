@@ -1,0 +1,11 @@
+{
+  "name": "restore-purchase",
+  "version": "1.0.0",
+  "description": "恢复 Apple IAP 购买",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}

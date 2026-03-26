@@ -1,0 +1,11 @@
+{
+  "name": "check-purchase-status",
+  "version": "1.0.0",
+  "description": "检查购买状态",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}

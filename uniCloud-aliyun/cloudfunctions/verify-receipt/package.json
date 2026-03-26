@@ -1,0 +1,11 @@
+{
+  "name": "verify-receipt",
+  "version": "1.0.0",
+  "description": "验证 Apple IAP 购买收据",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}

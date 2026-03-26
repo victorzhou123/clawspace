@@ -1,0 +1,83 @@
+{
+  "collections": [
+    {
+      "collection": "purchases",
+      "description": "用户购买记录表（测试环境）",
+      "fields": [
+        {
+          "name": "_id",
+          "type": "string",
+          "description": "自动生成的文档ID"
+        },
+        {
+          "name": "originalTransactionId",
+          "type": "string",
+          "description": "Apple 原始交易ID（唯一标识）",
+          "required": true
+        },
+        {
+          "name": "productId",
+          "type": "string",
+          "description": "产品ID",
+          "required": true
+        },
+        {
+          "name": "purchaseDate",
+          "type": "timestamp",
+          "description": "购买时间戳",
+          "required": true
+        },
+        {
+          "name": "receipt",
+          "type": "string",
+          "description": "加密的收据数据",
+          "required": true
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "购买状态：active/expired",
+          "default": "active",
+          "required": true
+        },
+        {
+          "name": "lastVerified",
+          "type": "timestamp",
+          "description": "最后验证时间",
+          "required": true
+        },
+        {
+          "name": "createTime",
+          "type": "timestamp",
+          "description": "创建时间"
+        },
+        {
+          "name": "updateTime",
+          "type": "timestamp",
+          "description": "更新时间"
+        }
+      ],
+      "indexes": [
+        {
+          "indexName": "originalTransactionId_unique",
+          "fields": [
+            {
+              "field": "originalTransactionId",
+              "direction": "asc"
+            }
+          ],
+          "unique": true
+        },
+        {
+          "indexName": "status_index",
+          "fields": [
+            {
+              "field": "status",
+              "direction": "asc"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
