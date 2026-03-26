@@ -26,3 +26,6 @@ playwright-report/
 
 # Build artifacts
 unpackage/
+
+# Desgin
+design/
