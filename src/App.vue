@@ -2,6 +2,7 @@
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
 import { useUserStore } from "@/stores/user";
 import { useInstanceStore } from "@/stores/instance";
+import { usePaywallStore } from "@/stores/paywall";
 import { WHITE_LIST } from "@/utils/guard";
 import { wsManager } from "@/utils/websocket-manager";
 import { logger } from "@/utils/logger";
@@ -12,6 +13,7 @@ let isFirstLaunch = true;
 onLaunch(async () => {
   const userStore = useUserStore();
   const instanceStore = useInstanceStore();
+  const paywallStore = usePaywallStore();
 
   // 迁移旧的登录数据到实例管理系统
   instanceStore.initFromLegacyStorage();
@@ -28,6 +30,11 @@ onLaunch(async () => {
   uni.addInterceptor("reLaunch", { invoke: checkAuth });
 
   await userStore.autoLogin().catch(() => {});
+
+  // 检查购买状态
+  paywallStore.checkPurchaseStatus().catch(() => {
+    logger.info(TAG, '检查购买状态失败，使用本地缓存');
+  });
 });
 
 onShow(() => {
