@@ -6,13 +6,13 @@ const ENV = 'test'; // 'test' 或 'prod'
 const CONFIG = {
   test: {
     tableName: 'purchases_test',
-    encryptionKey: 'clawspace-test-key-32bytes!@#$', // 32字节
-    encryptionIV: 'clawspace-test16' // 16字节
+    encryptionKey: 'clawspace-test-key-32bytes!@#$12', // 32字节
+    encryptionIV: 'clawspace-test12' // 16字节
   },
   prod: {
     tableName: 'purchases_prod',
-    encryptionKey: 'clawspace-prod-key-32bytes!@#$', // 32字节 - 生产环境请修改为更安全的密钥
-    encryptionIV: 'clawspace-prod16' // 16字节 - 生产环境请修改
+    encryptionKey: 'clawspace-prod-key-32bytes!@#$12', // 32字节 - 生产环境请修改为更安全的密钥
+    encryptionIV: 'clawspace-prod12' // 16字节 - 生产环境请修改
   }
 };
 
