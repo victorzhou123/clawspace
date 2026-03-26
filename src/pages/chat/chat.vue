@@ -98,6 +98,7 @@ import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
+import { usePaywallStore } from '@/stores/paywall'
 import MsgBubble from '@/components/MsgBubble.vue'
 import DrawerMenu from '@/components/DrawerMenu.vue'
 import { useTheme } from '@/composables/useTheme'
@@ -105,6 +106,7 @@ import { onVibrate } from '@/utils/haptic'
 
 const sessionStore = useSessionStore()
 const chatStore = useChatStore()
+const paywallStore = usePaywallStore()
 const { currentSessionId, sessions } = storeToRefs(sessionStore)
 const { messages, sending, streaming, hasMore } = storeToRefs(chatStore)
 
@@ -255,10 +257,21 @@ async function onSend() {
   if (!content || sending.value) return
   const sessionId = sessionStore.currentSessionId
   if (!sessionId) return
+
+  // 检查是否可以发送消息（第7条时弹出付费墙）
+  if (!paywallStore.canSendMessage()) {
+    uni.navigateTo({
+      url: '/pages/paywall/paywall'
+    })
+    return
+  }
+
   inputText.value = ''
   await nextTick()
   try {
     await chatStore.sendMessage(sessionId, content)
+    // 发送成功后增加计数
+    paywallStore.incrementMessageCount()
   } catch {
     uni.showToast({ title: '发送失败', icon: 'none' })
   }

@@ -20,7 +20,7 @@
       </view>
 
       <view
-        v-for="session in sessions"
+        v-for="(session, index) in displaySessions"
         :key="session.key"
         class="session-item"
         @tap="openSession(session.key)"
@@ -33,6 +33,18 @@
         <view class="session-meta">
           <text class="session-time">{{ formatTime(session.updatedAt) }}</text>
         </view>
+      </view>
+
+      <!-- 免费用户限制提示 -->
+      <view v-if="showPaywallHint" class="paywall-hint" @tap="goToPaywall">
+        <view class="hint-content">
+          <text class="hint-icon">🔒</text>
+          <view class="hint-text">
+            <text class="hint-title">解锁全部功能</text>
+            <text class="hint-desc">查看所有历史会话</text>
+          </view>
+        </view>
+        <text class="hint-arrow">›</text>
       </view>
     </scroll-view>
 
@@ -53,18 +65,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
+import { usePaywallStore } from '@/stores/paywall'
 import { useTheme } from '@/composables/useTheme'
 import { useRefresher } from '@/composables/useRefresher'
 import { onVibrate } from '@/utils/haptic'
 
 const sessionStore = useSessionStore()
 const chatStore = useChatStore()
+const paywallStore = usePaywallStore()
 const { sessions } = storeToRefs(sessionStore)
 const { themeClass, theme } = useTheme()
 const { refresherBackground } = useRefresher()
@@ -73,6 +87,27 @@ const menuVisible = ref(false)
 const menuTop = ref(0)
 const menuLeft = ref(0)
 const selectedSession = ref({ key: '', title: '' })
+
+// 显示的会话列表（免费用户只显示前3条）
+const displaySessions = computed(() => {
+  if (paywallStore.isPremium) {
+    return sessions.value
+  }
+  return sessions.value.slice(0, paywallStore.FREE_SESSION_LIMIT)
+})
+
+// 是否显示付费墙提示
+const showPaywallHint = computed(() => {
+  return !paywallStore.isPremium && sessions.value.length > paywallStore.FREE_SESSION_LIMIT
+})
+
+// 跳转到付费墙
+function goToPaywall() {
+  onVibrate()
+  uni.navigateTo({
+    url: '/pages/paywall/paywall'
+  })
+}
 
 onLoad(() => { guardAuth() })
 
@@ -313,5 +348,55 @@ function formatTime(ts: number | null): string {
   &.danger {
     color: #ff4d4f;
   }
+}
+
+.paywall-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx;
+  margin: 24rpx 32rpx;
+  background: linear-gradient(135deg, rgba(0, 88, 188, 0.1) 0%, rgba(0, 112, 235, 0.05) 100%);
+  border-radius: 16rpx;
+  border: 2rpx solid rgba(0, 88, 188, 0.2);
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.hint-content {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  flex: 1;
+}
+
+.hint-icon {
+  font-size: 48rpx;
+  line-height: 1;
+}
+
+.hint-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.hint-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.hint-desc {
+  font-size: 24rpx;
+  color: var(--text-tertiary);
+}
+
+.hint-arrow {
+  font-size: 48rpx;
+  color: var(--text-tertiary);
+  font-weight: 300;
 }
 </style>

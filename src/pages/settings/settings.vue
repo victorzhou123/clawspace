@@ -30,6 +30,13 @@
       <!-- 设置项 -->
       <view class="section">
         <view class="section-title">通用</view>
+        <view class="item" @tap="goToPaywall">
+          <text class="item-label">解锁全部功能</text>
+          <view class="premium-badge" v-if="isPremium">
+            <text class="badge-text">已解锁</text>
+          </view>
+          <text v-else class="arrow">›</text>
+        </view>
         <view class="item" @tap="toggleTheme">
           <text class="item-label">外观</text>
           <text class="item-value">{{ theme === 'dark' ? '暗黑' : '明亮' }}</text>
@@ -82,11 +89,14 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useUserStore } from '@/stores/user'
+import { usePaywallStore } from '@/stores/paywall'
 import { useTheme } from '@/composables/useTheme'
 import { onVibrate } from '@/utils/haptic'
 
 const userStore = useUserStore()
+const paywallStore = usePaywallStore()
 const { instanceUrl } = storeToRefs(userStore)
+const { isPremium } = storeToRefs(paywallStore)
 const { themeClass, theme, toggle: toggleTheme } = useTheme()
 
 const version = ref((() => {
@@ -135,12 +145,12 @@ function calculateCacheSize() {
 function clearCache() {
   uni.showModal({
     title: '清除缓存',
-    content: '将清除本地缓存数据（不包括登录信息），确认清除？',
+    content: '将清除本地缓存数据（不包括登录信息和购买记录），确认清除？',
     success: (res) => {
       if (res.confirm) {
         try {
           const info = uni.getStorageInfoSync()
-          const keepKeys = new Set(['auth_token', 'instance_url', 'user'])
+          const keepKeys = new Set(['auth_token', 'instance_url', 'user', '__message_count__', '__premium_status__', '__transaction_id__'])
           info.keys.forEach(key => {
             if (!keepKeys.has(key)) uni.removeStorageSync(key)
           })
@@ -150,6 +160,11 @@ function clearCache() {
       }
     },
   })
+}
+
+function goToPaywall() {
+  onVibrate()
+  uni.navigateTo({ url: '/pages/paywall/paywall' })
 }
 
 function goAgents() {
@@ -310,7 +325,10 @@ function confirmLogout() {
   .arrow { font-size: 40rpx; color: var(--text-tertiary); }
 }
 
-.logout-section { margin: 48rpx 24rpx 24rpx; }
+.logout-section { 
+  margin: 48rpx 24rpx 24rpx; 
+  padding-bottom: env(safe-area-inset-bottom);
+}
 
 .btn-logout {
   width: 100%;
@@ -321,5 +339,18 @@ function confirmLogout() {
   font-size: 32rpx;
   border: none;
   &:active { opacity: 0.8; }
+}
+
+.premium-badge {
+  padding: 8rpx 16rpx;
+  background: linear-gradient(135deg, rgba(0, 88, 188, 0.1) 0%, rgba(0, 112, 235, 0.05) 100%);
+  border-radius: 12rpx;
+  border: 1rpx solid rgba(0, 88, 188, 0.2);
+
+  .badge-text {
+    font-size: 24rpx;
+    font-weight: 600;
+    color: #0058bc;
+  }
 }
 </style>
