@@ -1,6 +1,7 @@
 // WebSocket 管理器（连接、重连、心跳）
 
 import { logger } from '@/utils/logger'
+import { eventBus, Events } from '@/utils/event-bus'
 import type { AuthConfig, RpcRequest, ConnectionStatus } from '@/types/websocket'
 
 const TAG = 'WebSocket'
@@ -99,6 +100,7 @@ export class WebSocketManager {
           .then(() => {
             logger.info(TAG, 'handshake successful')
             this._status = 'connected'
+            eventBus.emit(Events.WS_CONNECTED)
             // 握手成功后启动 tick 超时检测
             this._resetTickTimer()
             // 握手成功后清除敏感字段
@@ -137,6 +139,7 @@ export class WebSocketManager {
         logger.warn(TAG, 'connection closed')
         this._clearTickTimer()
         this._status = 'disconnected'
+        eventBus.emit(Events.WS_DISCONNECTED)
         if (!this.destroyed && !this.reconnecting && !this.authFailed) this._scheduleReconnect()
       })
 
@@ -230,6 +233,7 @@ export class WebSocketManager {
     this.destroyed = true
     this._clearTickTimer()
     this._status = 'disconnected'
+    eventBus.emit(Events.WS_DISCONNECTED)
     this.ws?.close({})
     this.ws = null
     this._rejectAllPending(new Error('WebSocket disconnected'))

@@ -16,7 +16,12 @@
         </view>
         <view class="user-info">
           <text class="user-name">{{ userName }}</text>
-          <text class="user-status">已登录</text>
+          <view class="user-status-row">
+            <text class="user-status" :class="{ disconnected: connectionStatus !== 'connected' }">{{ connectionStatus === 'connected' ? '已连接' : '未连接' }}</text>
+            <view v-if="connectionStatus !== 'connected'" class="reconnect-btn" @tap.stop="reconnectCurrentInstance">
+              <image class="reconnect-icon" :src="theme === 'dark' ? '/static/icon/reconnect-light.svg' : '/static/icon/reconnect-dark.svg'" mode="aspectFit" />
+            </view>
+          </view>
           <text v-if="instanceUrl" class="user-instance">{{ instanceUrl }}</text>
         </view>
         <view class="switch-btn" @tap="goToInstances">
@@ -90,13 +95,19 @@ import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useUserStore } from '@/stores/user'
 import { usePaywallStore } from '@/stores/paywall'
+import { useConnectionStore } from '@/stores/connection'
+import { useInstanceStore } from '@/stores/instance'
 import { useTheme } from '@/composables/useTheme'
 import { onVibrate } from '@/utils/haptic'
 
 const userStore = useUserStore()
 const paywallStore = usePaywallStore()
+const connectionStore = useConnectionStore()
+const instanceStore = useInstanceStore()
 const { instanceUrl } = storeToRefs(userStore)
 const { isPremium } = storeToRefs(paywallStore)
+const { status: connectionStatus } = storeToRefs(connectionStore)
+const { currentInstanceId } = storeToRefs(instanceStore)
 const { themeClass, theme, toggle: toggleTheme } = useTheme()
 
 const version = ref((() => {
@@ -116,6 +127,7 @@ const userInitial = computed(() => userName.value.charAt(0).toUpperCase())
 onLoad(() => { guardAuth() })
 
 onShow(() => {
+  connectionStore.syncStatus()
   calculateCacheSize()
 })
 
@@ -186,6 +198,23 @@ function goCron() {
 function goToInstances() {
   onVibrate()
   uni.navigateTo({ url: '/pages/instances/list' })
+}
+
+async function reconnectCurrentInstance() {
+  if (!currentInstanceId.value) return
+
+  onVibrate()
+  uni.showLoading({ title: '重连中...' })
+  try {
+    await instanceStore.switchInstance(currentInstanceId.value)
+    connectionStore.syncStatus()
+    uni.hideLoading()
+    uni.showToast({ title: '重连成功', icon: 'success' })
+  } catch (e: any) {
+    connectionStore.syncStatus()
+    uni.hideLoading()
+    uni.showToast({ title: e?.message || '重连失败', icon: 'none', duration: 2000 })
+  }
 }
 
 function checkUpdate() {
@@ -300,7 +329,28 @@ function confirmLogout() {
   flex-direction: column;
   gap: 8rpx;
   .user-name { font-size: 32rpx; font-weight: 500; color: var(--text-primary); }
+  .user-status-row {
+    display: flex;
+    align-items: center;
+    gap: 10rpx;
+  }
   .user-status { font-size: 26rpx; color: var(--success); }
+  .user-status.disconnected { color: var(--danger); }
+  .reconnect-btn {
+    width: 32rpx;
+    height: 32rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:active {
+      opacity: 0.6;
+    }
+  }
+  .reconnect-icon {
+    width: 28rpx;
+    height: 28rpx;
+  }
   .user-instance { font-size: 22rpx; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 

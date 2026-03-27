@@ -22,7 +22,7 @@
         <view class="instance-info">
           <text class="instance-name">{{ instance.name }}</text>
           <text class="instance-url">{{ instance.url }}</text>
-          <text v-if="instance.id === currentInstanceId" class="instance-status">已连接</text>
+          <text v-if="instance.id === currentInstanceId" class="instance-status" :class="{ disconnected: connectionStatus !== 'connected' }">{{ connectionStatus === 'connected' ? '已连接' : '未连接' }}</text>
         </view>
         <view class="instance-meta">
           <text class="instance-time">{{ formatTime(instance.lastLoginTime) }}</text>
@@ -61,16 +61,20 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { guardAuth } from '@/utils/guard'
 import { useInstanceStore } from '@/stores/instance'
+import { useConnectionStore } from '@/stores/connection'
 import { useTheme } from '@/composables/useTheme'
 import { onVibrate } from '@/utils/haptic'
 
 const instanceStore = useInstanceStore()
+const connectionStore = useConnectionStore()
 const { instances, currentInstanceId } = storeToRefs(instanceStore)
+const { status: connectionStatus } = storeToRefs(connectionStore)
 const { themeClass, theme } = useTheme()
 
 onLoad(() => { guardAuth() })
 
 onShow(() => {
+  connectionStore.syncStatus()
   instanceStore.loadInstances()
 })
 
@@ -250,6 +254,11 @@ function formatTime(timestamp: number): string {
     background: rgba(82, 196, 26, 0.1);
     padding: 4rpx 12rpx;
     border-radius: 8rpx;
+  }
+
+  .instance-status.disconnected {
+    color: var(--text-tertiary);
+    background: rgba(99, 99, 102, 0.1);
   }
 }
 
