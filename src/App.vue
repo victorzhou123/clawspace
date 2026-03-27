@@ -31,10 +31,17 @@ onLaunch(async () => {
 
   await userStore.autoLogin().catch(() => {});
 
-  // 检查购买状态
-  paywallStore.checkPurchaseStatus().catch(() => {
-    logger.info(TAG, '检查购买状态失败，使用本地缓存');
-  });
+  // 检查购买状态：如果本地不是高级用户，尝试恢复购买
+  if (!paywallStore.isPremium) {
+    paywallStore.restorePurchase().catch(() => {
+      // 静默失败，不提示用户
+    });
+  } else {
+    // 如果本地已是高级用户，验证云端状态
+    paywallStore.checkPurchaseStatus().catch(() => {
+      logger.info(TAG, '检查购买状态失败，使用本地缓存');
+    });
+  }
 });
 
 onShow(() => {

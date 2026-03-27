@@ -41,7 +41,6 @@
           <text class="price-label">一次性付费</text>
           <view class="price-amount">
             <text class="price-value">¥ {{ productPrice }}</text>
-            <text class="price-unit">一次性</text>
           </view>
           <text class="price-desc">一次付费，永久拥有高级体验</text>
         </view>
@@ -63,11 +62,12 @@
     <view class="floating-actions">
       <button
         class="btn-primary"
-        :class="{ loading: isPurchasing }"
-        :disabled="isPurchasing"
+        :class="{ loading: isPurchasing, unlocked: isPremium }"
+        :disabled="isPurchasing || isPremium"
         @click="handlePurchase"
       >
-        <text v-if="!isPurchasing">获取终身访问权限</text>
+        <text v-if="isPremium">已解锁所有功能</text>
+        <text v-else-if="!isPurchasing">获取终身访问权限</text>
         <text v-else>购买中...</text>
       </button>
     </view>
@@ -86,6 +86,7 @@ const themeStore = useThemeStore()
 const isDark = computed(() => themeStore.theme === 'dark')
 const isPurchasing = computed(() => paywallStore.isPurchasing)
 const isRestoring = computed(() => paywallStore.isRestoring)
+const isPremium = computed(() => paywallStore.isPremium)
 
 // 产品价格
 const productPrice = ref('8')
@@ -100,7 +101,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('获取产品信息失败', error)
     // 使用默认价格
-    productPrice.value = '¥8'
+    productPrice.value = '8'
   }
 })
 
@@ -413,16 +414,6 @@ async function handleRestore() {
   }
 }
 
-.price-unit {
-  font-size: 16px;
-  font-weight: 500;
-  color: #414755;
-
-  .dark & {
-    color: #c1c6d7;
-  }
-}
-
 .price-desc {
   font-size: 14px;
   color: #414755;
@@ -535,6 +526,12 @@ async function handleRestore() {
 
   &.loading {
     opacity: 0.8;
+  }
+
+  &.unlocked {
+    background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+    box-shadow: 0 8px 24px rgba(107, 114, 128, 0.3);
+    opacity: 0.7;
   }
 }
 </style>
