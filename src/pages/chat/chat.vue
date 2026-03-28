@@ -153,7 +153,7 @@ onUnmounted(() => { stopTyping() })
 const currentSessionTitle = computed(() => {
   if (!currentSessionId.value) return ''
   const s = sessions.value.find(s => s.key === currentSessionId.value)
-  return s?.key || s?.label || s?.derivedTitle || s?.displayName || currentSessionId.value
+  return  s?.label || s?.derivedTitle || s?.displayName || s?.key || currentSessionId.value
 })
 
 onLoad(() => { guardAuth() })
