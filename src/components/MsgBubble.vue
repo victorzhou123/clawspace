@@ -6,13 +6,18 @@
     <!-- 用户消息：纯文本 -->
     <text v-else-if="isUser" class="bubble-text" :selectable="true">{{ textContent }}</text>
 
-    <!-- toolResult 消息 -->
-    <view v-else-if="role === 'toolResult'" class="tool-result" :class="{ 'tool-result-error': isError }">
-      <view class="tool-result-header">
-        <text class="tool-result-title">{{ toolName || 'Tool Result' }}</text>
+    <!-- 非 user / assistant 消息：整条默认折叠 -->
+    <view v-else-if="isDirectlyCollapsible" class="collapsible">
+      <view class="collapsible-header" @tap="toggleMessageCollapse">
+        <text class="collapsible-icon">{{ messageCollapsed ? '▶' : '▼' }}</text>
+        <text class="collapsible-title">{{ toolName || 'Tool Result' }}</text>
       </view>
-      <view class="code-block">
-        <text class="code-text" :selectable="true">{{ textContent }}</text>
+      <view v-if="!messageCollapsed" class="collapsible-content">
+        <view class="tool-result" :class="{ 'tool-result-error': isError }">
+          <view class="code-block">
+            <text class="code-text" :selectable="true">{{ textContent }}</text>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -82,6 +87,8 @@ const props = defineProps<{
 }>()
 
 const isUser = computed(() => props.role === 'user')
+const isAssistant = computed(() => props.role === 'assistant')
+const isDirectlyCollapsible = computed(() => !isUser.value && !isAssistant.value)
 const isComplexContent = computed(() => Array.isArray(props.content))
 const contentParts = computed(() => (Array.isArray(props.content) ? props.content : []))
 
@@ -106,13 +113,19 @@ const bubbleClass = computed(() => {
   return isUser.value ? 'bubble-user' : 'bubble-assistant'
 })
 
-// 折叠状态
+const messageCollapsed = ref(true)
+
+// assistant 消息内部的折叠状态：仅折叠非 text 内容
 const collapsed = ref<Record<number, boolean>>({})
 contentParts.value.forEach((part, idx) => {
-  if (part.type !== 'text') {
+  if (isAssistant.value && part.type !== 'text') {
     collapsed.value[idx] = true
   }
 })
+
+function toggleMessageCollapse() {
+  messageCollapsed.value = !messageCollapsed.value
+}
 
 function toggleCollapse(idx: number) {
   collapsed.value[idx] = !collapsed.value[idx]
