@@ -107,7 +107,7 @@ const instanceStore = useInstanceStore()
 const { instanceUrl } = storeToRefs(userStore)
 const { isPremium } = storeToRefs(paywallStore)
 const { status: connectionStatus } = storeToRefs(connectionStore)
-const { currentInstanceId } = storeToRefs(instanceStore)
+const { currentInstanceId, currentInstance } = storeToRefs(instanceStore)
 const { themeClass, theme, toggle: toggleTheme } = useTheme()
 
 const version = ref((() => {
@@ -116,6 +116,7 @@ const version = ref((() => {
 const cacheSize = ref('0 KB')
 
 const userName = computed(() => {
+  if (currentInstance.value?.name) return currentInstance.value.name
   if (instanceUrl.value) {
     try { return new URL(instanceUrl.value).hostname } catch { /* ignore */ }
     return instanceUrl.value
