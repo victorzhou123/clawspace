@@ -16,33 +16,33 @@
       <view
         v-for="instance in instances"
         :key="instance.id"
-        class="instance-item"
-        :class="{ active: instance.id === currentInstanceId }"
+        class="instance-block"
       >
-        <view class="instance-info">
-          <text class="instance-name">{{ instance.name }}</text>
-          <text class="instance-url">{{ instance.url }}</text>
-          <text v-if="instance.id === currentInstanceId" class="instance-status" :class="{ disconnected: connectionStatus !== 'connected' }">{{ connectionStatus === 'connected' ? '已连接' : '未连接' }}</text>
+        <view
+          class="instance-item"
+          :class="{ active: instance.id === currentInstanceId }"
+        >
+          <view class="instance-info">
+            <text class="instance-name">{{ instance.name }}</text>
+            <text class="instance-url">{{ instance.url }}</text>
+            <text v-if="instance.id === currentInstanceId" class="instance-status" :class="{ disconnected: connectionStatus !== 'connected' }">{{ connectionStatus === 'connected' ? '已连接' : '未连接' }}</text>
+          </view>
+          <view class="instance-meta">
+            <text class="instance-time">{{ formatTime(instance.lastLoginTime) }}</text>
+          </view>
         </view>
-        <view class="instance-meta">
-          <text class="instance-time">{{ formatTime(instance.lastLoginTime) }}</text>
-        </view>
-      </view>
 
-      <view
-        v-for="instance in instances"
-        :key="instance.id + '_actions'"
-        class="instance-actions-wrapper"
-      >
-        <view class="instance-actions">
-          <view v-if="instance.id !== currentInstanceId" class="btn-action" @tap="switchTo(instance.id)">
-            <text class="btn-text">连接</text>
-          </view>
-          <view class="btn-action" @tap="editInstance(instance.id)">
-            <text class="btn-text">编辑</text>
-          </view>
-          <view v-if="instance.id !== currentInstanceId" class="btn-action btn-danger" @tap="confirmDelete(instance.id)">
-            <text class="btn-text">删除</text>
+        <view class="instance-actions-wrapper">
+          <view class="instance-actions">
+            <view v-if="instance.id !== currentInstanceId" class="btn-action" @tap="switchTo(instance.id)">
+              <text class="btn-text">连接</text>
+            </view>
+            <view class="btn-action" @tap="editInstance(instance.id)">
+              <text class="btn-text">编辑</text>
+            </view>
+            <view v-if="instance.id !== currentInstanceId" class="btn-action btn-danger" @tap="confirmDelete(instance.id)">
+              <text class="btn-text">删除</text>
+            </view>
           </view>
         </view>
       </view>
@@ -209,8 +209,16 @@ function formatTime(timestamp: number): string {
   height: 0;
 }
 
-.instance-item {
+.instance-block {
   margin: 24rpx;
+  padding: 24rpx;
+  background: var(--bg-secondary);
+  border: 1rpx solid var(--border-color);
+  border-radius: 24rpx;
+}
+
+.instance-item {
+  margin: 0;
   padding: 32rpx;
   background: var(--bg-card);
   border-radius: 20rpx;
@@ -218,11 +226,6 @@ function formatTime(timestamp: number): string {
   display: flex;
   align-items: flex-start;
   gap: 24rpx;
-
-  &.active {
-    border-color: var(--primary);
-    background: var(--bg-card);
-  }
 }
 
 .instance-info {
@@ -275,7 +278,7 @@ function formatTime(timestamp: number): string {
 }
 
 .instance-actions-wrapper {
-  margin: 0 24rpx 24rpx;
+  margin-top: 24rpx;
 }
 
 .instance-actions {

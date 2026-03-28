@@ -314,11 +314,16 @@ function handleCancel() {
 .btn-action {
   flex: 1;
   height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   background: var(--bg-card);
   color: var(--text-primary);
   border-radius: 12rpx;
   font-size: 28rpx;
   font-weight: 500;
+  text-align: center;
   border: 1rpx solid var(--border-color);
 
   &:active {
@@ -329,15 +334,17 @@ function handleCancel() {
     opacity: 0.6;
   }
 
-  &:first-child {
-    background: var(--primary);
+  &:first-child,
+  &:nth-child(2) {
+    background: var(--bg-tertiary);
     color: #fff;
     border: none;
   }
 
   &.btn-cancel {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
+    background: rgba(255, 77, 79, 0.12);
+    color: var(--danger);
+    border: 1rpx solid rgba(255, 77, 79, 0.24);
   }
 }
 
