@@ -146,7 +146,7 @@ export const usePaywallStore = defineStore('paywall', () => {
   }
 
   // 恢复购买
-  async function restorePurchase(): Promise<{ success: boolean; message?: string }> {
+  async function restorePurchase(silent = false): Promise<{ success: boolean; message?: string }> {
     return new Promise((resolve) => {
       console.log('=== restorePurchase 函数开始 ===')
       isRestoring.value = true
@@ -161,7 +161,7 @@ export const usePaywallStore = defineStore('paywall', () => {
         if (!iapChannel) {
           console.log('未找到 IAP 支付通道')
           isRestoring.value = false
-          uni.showToast({ title: '不支持 IAP 支付', icon: 'none' })
+          if (!silent) uni.showToast({ title: '不支持 IAP 支付', icon: 'none' })
           resolve({ success: false, message: '不支持 IAP 支付' })
           return
         }
@@ -177,7 +177,7 @@ export const usePaywallStore = defineStore('paywall', () => {
             console.log('恢复购买超时（10秒无响应）')
             isResolved = true
             isRestoring.value = false
-            uni.showToast({ title: '恢复购买超时，请重试', icon: 'none' })
+            if (!silent) uni.showToast({ title: '恢复购买超时，请重试', icon: 'none' })
             resolve({ success: false, message: '超时' })
           }
         }
@@ -245,24 +245,24 @@ export const usePaywallStore = defineStore('paywall', () => {
                 iapChannel.finishTransaction({ transactionIdentifier: targetProduct.transactionIdentifier })
 
                 isRestoring.value = false
-                uni.showToast({ title: '恢复成功', icon: 'success' })
+                if (!silent) uni.showToast({ title: '恢复成功', icon: 'success' })
                 resolve({ success: true })
               } else {
                 console.log('验证失败:', data.message)
                 isRestoring.value = false
-                uni.showToast({ title: data.message || '恢复失败', icon: 'none' })
+                if (!silent) uni.showToast({ title: data.message || '恢复失败', icon: 'none' })
                 resolve({ success: false, message: data.message })
               }
             } catch (error: any) {
               console.error('云函数调用失败', error)
               isRestoring.value = false
-              uni.showToast({ title: '恢复失败，请稍后重试', icon: 'none' })
+              if (!silent) uni.showToast({ title: '恢复失败，请稍后重试', icon: 'none' })
               resolve({ success: false, message: error.message })
             }
           } else {
             console.log('未找到目标产品')
             isRestoring.value = false
-            uni.showToast({ title: '未找到购买记录', icon: 'none' })
+            if (!silent) uni.showToast({ title: '未找到购买记录', icon: 'none' })
             resolve({ success: false, message: '未找到购买记录' })
           }
         }, (err: any) => {
@@ -273,13 +273,13 @@ export const usePaywallStore = defineStore('paywall', () => {
           console.error('恢复购买失败', err)
           console.log('错误详情 - code:', err.code, 'message:', err.message)
           isRestoring.value = false
-          uni.showToast({ title: err.message || '恢复失败', icon: 'none' })
+          if (!silent) uni.showToast({ title: err.message || '恢复失败', icon: 'none' })
           resolve({ success: false, message: err.message })
         })
       }, (err: any) => {
         console.error('获取支付通道失败', err)
         isRestoring.value = false
-        uni.showToast({ title: '获取支付通道失败', icon: 'none' })
+        if (!silent) uni.showToast({ title: '获取支付通道失败', icon: 'none' })
         resolve({ success: false, message: '获取支付通道失败' })
       })
       // #endif

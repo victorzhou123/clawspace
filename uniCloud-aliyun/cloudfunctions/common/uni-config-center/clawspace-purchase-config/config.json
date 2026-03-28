@@ -1,0 +1,13 @@
+{
+  "env": "test",
+  "test": {
+    "tableName": "purchases_test",
+    "encryptionKey": "clawspace-test-key-32bytes!@#$12",
+    "encryptionIV": "clawspace-test12"
+  },
+  "prod": {
+    "tableName": "purchases_prod",
+    "encryptionKey": "clawspace-prod-key-32bytes!@#$12",
+    "encryptionIV": "clawspace-prod12"
+  }
+}

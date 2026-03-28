@@ -6,6 +6,7 @@ import { usePaywallStore } from "@/stores/paywall";
 import { WHITE_LIST } from "@/utils/guard";
 import { wsManager } from "@/utils/websocket-manager";
 import { logger } from "@/utils/logger";
+import { waitForNetwork } from "@/utils/network";
 
 const TAG = 'App';
 let isFirstLaunch = true;
@@ -33,8 +34,17 @@ onLaunch(async () => {
 
   // 检查购买状态：如果本地不是高级用户，尝试恢复购买
   if (!paywallStore.isPremium) {
-    paywallStore.restorePurchase().catch(() => {
-      // 静默失败，不提示用户
+    // 先等待网络可用
+    waitForNetwork(6, 1000).then(hasNetwork => {
+      if (hasNetwork) {
+        // 网络可用，静默恢复购买
+        paywallStore.restorePurchase(true).catch(() => {
+          // 静默失败，不提示用户
+        });
+      } else {
+        // 网络不可用，放弃本次恢复（不影响 app 启动）
+        console.log('网络不可用，跳过自动恢复购买');
+      }
     });
   } else {
     // 如果本地已是高级用户，验证云端状态

@@ -1,29 +1,14 @@
 'use strict';
 
 const crypto = require('crypto');
-
-// ========== 环境配置 ==========
-// 修改这里可以快速切换测试/生产环境
-const ENV = 'test'; // 'test' 或 'prod'
-
-const CONFIG = {
-  test: {
-    tableName: 'purchases_test',
-    encryptionKey: 'clawspace-test-key-32bytes!@#123', // 32字节
-    encryptionIV: 'clawspace-test12' // 16字节
-  },
-  prod: {
-    tableName: 'purchases_prod',
-    encryptionKey: 'clawspace-prod-key-32bytes!@#123', // 32字节
-    encryptionIV: 'clawspace-prod12' // 16字节
-  }
-};
-
-const CURRENT_CONFIG = CONFIG[ENV];
-const TABLE_NAME = CURRENT_CONFIG.tableName;
-const ENCRYPTION_KEY = Buffer.from(CURRENT_CONFIG.encryptionKey);
-const ENCRYPTION_IV = Buffer.from(CURRENT_CONFIG.encryptionIV);
-// ========== 环境配置结束 ==========
+const createConfig = require('uni-config-center');
+const purchaseConfig = createConfig({ pluginId: 'clawspace-purchase-config' });
+const config = purchaseConfig.config();
+const ENV = config.env || 'test';
+const CURRENT_CONFIG = config[ENV] || {};
+const TABLE_NAME = CURRENT_CONFIG.tableName || 'purchases_test';
+const ENCRYPTION_KEY = Buffer.from(CURRENT_CONFIG.encryptionKey || 'clawspace-test-key-32bytes!@#123');
+const ENCRYPTION_IV = Buffer.from(CURRENT_CONFIG.encryptionIV || 'clawspace-test12');
 
 // Apple 验证 API
 const PRODUCTION_URL = 'https://buy.itunes.apple.com/verifyReceipt';
@@ -76,14 +61,9 @@ exports.main = async (event, context) => {
   }
 
   try {
-    // 1. 先尝试生产环境验证
-    let verifyResult = await verifyWithApple(receipt, false);
-
-    // 2. 如果返回 21007，说明是沙盒收据，切换到沙盒环境
-    if (verifyResult.status === 21007) {
-      console.log('检测到沙盒收据，切换到沙盒环境验证');
-      verifyResult = await verifyWithApple(receipt, true);
-    }
+    // 1. 根据 ENV 直接选择验证环境
+    const isSandbox = ENV === 'test';
+    let verifyResult = await verifyWithApple(receipt, isSandbox);
 
     // 3. 验证失败
     if (verifyResult.status !== 0) {

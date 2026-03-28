@@ -1,20 +1,11 @@
 'use strict';
 
-// ========== 环境配置 ==========
-// 修改这里可以快速切换测试/生产环境
-const ENV = 'test'; // 'test' 或 'prod'
-
-const CONFIG = {
-  test: {
-    tableName: 'purchases_test'
-  },
-  prod: {
-    tableName: 'purchases_prod'
-  }
-};
-
-const TABLE_NAME = CONFIG[ENV].tableName;
-// ========== 环境配置结束 ==========
+const createConfig = require('uni-config-center');
+const purchaseConfig = createConfig({ pluginId: 'clawspace-purchase-config' });
+const config = purchaseConfig.config();
+const ENV = config.env || 'test';
+const CURRENT_CONFIG = config[ENV] || {};
+const TABLE_NAME = CURRENT_CONFIG.tableName || 'purchases_test';
 
 console.log(`[check-purchase-status] 当前环境: ${ENV}, 表名: ${TABLE_NAME}`);
 
