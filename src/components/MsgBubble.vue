@@ -233,8 +233,12 @@ function toggleCollapse(idx: number) {
   display: flex;
   align-items: center;
   padding: 12rpx 16rpx;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.08);
   cursor: pointer;
+
+  .theme-dark & {
+    background: rgba(0, 0, 0, 0.2);
+  }
 }
 
 .collapsible-icon {
