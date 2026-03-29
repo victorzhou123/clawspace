@@ -13,12 +13,21 @@
           placeholder="实例地址，如 wss://192.168.1.1:18789"
           :maxlength="256"
         />
-        <input
-          v-model="form.token"
-          class="input"
-          placeholder="API Token"
-          :maxlength="512"
-        />
+        <view class="input-wrapper">
+          <input
+            v-model="form.token"
+            :type="showToken ? 'text' : 'password'"
+            class="input"
+            placeholder="API Token"
+            :maxlength="512"
+          />
+          <image
+            class="eye-icon"
+            :src="showToken ? (theme === 'dark' ? '/static/icon/eye-fill-light.svg' : '/static/icon/eye-fill-dark.svg') : (theme === 'dark' ? '/static/icon/eye-close-fill-light.svg' : '/static/icon/eye-close-fill-dark.svg')"
+            mode="aspectFit"
+            @tap="() => { onVibrate(); showToken = !showToken; }"
+          />
+        </view>
         <button class="btn-primary" :disabled="loading" @tap="handleLogin">
           {{ loading ? '连接中...' : '连 接' }}
         </button>
@@ -59,6 +68,7 @@ const { themeClass, theme } = useTheme()
 const loading = ref(false)
 const errorMsg = ref('')
 const tipExpanded = ref(false)
+const showToken = ref(false)
 let redirectUrl = ''
 
 onLoad((options) => {
@@ -173,6 +183,12 @@ function handleCopy() {
   gap: 24rpx;
 }
 
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .input {
   height: 88rpx;
   border: 1rpx solid var(--border-color);
@@ -181,6 +197,19 @@ function handleCopy() {
   font-size: 28rpx;
   background: var(--bg-primary);
   color: var(--text-primary);
+  flex: 1;
+}
+
+.input-wrapper .input {
+  padding-right: 80rpx;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 24rpx;
+  width: 40rpx;
+  height: 40rpx;
+  opacity: 0.6;
 }
 
 .btn-primary {
