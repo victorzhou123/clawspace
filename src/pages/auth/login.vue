@@ -151,7 +151,7 @@ function handleCopy() {
 
 .login-header {
   text-align: center;
-  margin-top: 300rpx;
+  margin-top: 400rpx;
   margin-bottom: 80rpx;
 
   .app-name {
