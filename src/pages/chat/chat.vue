@@ -260,8 +260,15 @@ async function onSend() {
 
   // 检查是否可以发送消息（第7条时弹出付费墙）
   if (!paywallStore.canSendMessage()) {
-    uni.navigateTo({
-      url: '/pages/paywall/paywall'
+    uni.showModal({
+      title: '提示',
+      content: '体验次数已耗尽，付费解锁完全功能',
+      showCancel: false,
+      success: () => {
+        uni.navigateTo({
+          url: '/pages/paywall/paywall'
+        })
+      },
     })
     return
   }

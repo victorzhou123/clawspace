@@ -37,16 +37,18 @@
           <text>暂无会话</text>
         </view>
         <view
-          v-for="s in sessions" :key="s.key"
-          class="session-item" :class="s.key === currentSessionId ? 'session-active' : ''"
-          @tap="selectSession(s.key)"
-          @longpress="onSessionLongPress($event, s.key, s.label || s.derivedTitle || s.displayName || s.key || '')"
+          v-for="s in sessionItems" :key="s.key"
+          class="session-item"
+          :class="[{ 'session-active': s.key === currentSessionId }, { 'session-locked': s.locked }]"
+          @tap="selectSession(s)"
+          @longpress="onSessionLongPress($event, s)"
         >
-          <view class="session-item-inner">
+          <view class="session-item-inner" :class="{ 'session-item-locked': s.locked }">
             <text class="session-title">{{ s.label || s.derivedTitle || s.displayName || s.key }}</text>
             <text class="session-preview">{{ s.lastMessagePreview || '暂无消息' }}</text>
           </view>
-          <text class="session-time">{{ formatTime(s.updatedAt) }}</text>
+          <text v-if="s.locked" class="session-lock">🔒</text>
+          <text v-else class="session-time">{{ formatTime(s.updatedAt) }}</text>
         </view>
       </scroll-view>
     </view>
@@ -73,6 +75,7 @@ import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/stores/user'
 import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
+import { usePaywallStore } from '@/stores/paywall'
 import { useTheme } from '@/composables/useTheme'
 import { useRefresher } from '@/composables/useRefresher'
 import { agentsList } from '@/api/agents'
@@ -86,8 +89,10 @@ const emit = defineEmits<{ (e: 'close'): void }>()
 const userStore = useUserStore()
 const sessionStore = useSessionStore()
 const chatStore = useChatStore()
+const paywallStore = usePaywallStore()
 const { instanceUrl } = storeToRefs(userStore)
 const { sessions, loading: sessionLoading, currentSessionId } = storeToRefs(sessionStore)
+const { isPremium } = storeToRefs(paywallStore)
 const { themeClass } = useTheme()
 const { refresherBackground } = useRefresher()
 const creatingSession = ref(false)
@@ -97,6 +102,13 @@ const menuTop = ref(0)
 const menuLeft = ref(0)
 const selectedSession = ref({ key: '', title: '' })
 const menuClickable = ref(false)
+
+const sessionItems = computed(() => {
+  return sessions.value.map((s, index) => ({
+    ...s,
+    locked: !isPremium.value && index >= paywallStore.FREE_SESSION_LIMIT,
+  }))
+})
 
 let touchStartX = 0
 let touchStartY = 0
@@ -185,15 +197,23 @@ async function onRefreshSessions() {
   refreshing.value = false
 }
 
-function selectSession(key: string) {
+function selectSession(session: { key: string; locked?: boolean }) {
   onVibrate()
-  sessionStore.setCurrentSession(key)
+  if (session.locked) {
+    showPaywallPrompt('仅展示前三个会话，付费解锁全部会话')
+    return
+  }
+  sessionStore.setCurrentSession(session.key)
   close()
 }
 
-function onSessionLongPress(e: any, key: string, title: string) {
+function onSessionLongPress(e: any, session: { key: string; locked?: boolean; label?: string; derivedTitle?: string; displayName?: string }) {
   onVibrate()
-  selectedSession.value = { key, title }
+  if (session.locked) {
+    showPaywallPrompt('仅展示前三个会话，付费解锁全部会话')
+    return
+  }
+  selectedSession.value = { key: session.key, title: session.label || session.derivedTitle || session.displayName || session.key }
   const { clientX, clientY } = e.touches?.[0] || e.changedTouches?.[0] || { clientX: 0, clientY: 0 }
   menuLeft.value = clientX
   menuTop.value = clientY
@@ -256,6 +276,18 @@ function confirmDelete(key: string) {
           }
         }
       }
+    },
+  })
+}
+
+function showPaywallPrompt(message: string) {
+  uni.showModal({
+    title: '提示',
+    content: message,
+    showCancel: false,
+    success: () => {
+      uni.navigateTo({ url: '/pages/paywall/paywall' })
+      close()
     },
   })
 }
@@ -351,6 +383,7 @@ function formatTime(ts: number | null): string {
   border-bottom: 1rpx solid var(--drawer-divider);
   &:active { background: var(--bg-tertiary); }
   &.session-active { background: var(--drawer-item-active); }
+  &.session-locked { opacity: 0.7; }
 }
 
 .session-item-inner {
@@ -360,7 +393,16 @@ function formatTime(ts: number | null): string {
   .session-preview { display: block; font-size: 24rpx; color: var(--text-tertiary); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 }
 
+.session-item-locked {
+  .session-title,
+  .session-preview {
+    filter: blur(3rpx);
+  }
+}
+
 .session-time { font-size: 22rpx; color: var(--text-tertiary); flex-shrink: 0; }
+
+.session-lock { font-size: 28rpx; color: var(--text-tertiary); flex-shrink: 0; }
 
 .new-session-btn {
   display: flex;

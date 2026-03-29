@@ -49,7 +49,7 @@
       <!-- 页脚 -->
       <view class="footer">
         <view class="footer-links">
-          <text class="footer-link" @click="handleRestore">恢复购买</text>
+          <text class="footer-link" :class="{ disabled: isRestoring }" @click="handleRestore">恢复购买</text>
           <text class="footer-link">服务条款</text>
           <text class="footer-link">隐私政策</text>
         </view>
@@ -128,22 +128,29 @@ async function handlePurchase() {
 
 // 恢复购买
 async function handleRestore() {
+  if (isRestoring.value) return
+
   console.log('=== 恢复购买开始 ===')
   onVibrate()
+  uni.showLoading({ title: '正在恢复购买...' })
 
-  console.log('调用 paywallStore.restorePurchase()')
-  const result = await paywallStore.restorePurchase()
-  console.log('恢复购买结果:', result)
+  try {
+    console.log('调用 paywallStore.restorePurchase()')
+    const result = await paywallStore.restorePurchase()
+    console.log('恢复购买结果:', result)
 
-  if (result.success) {
-    console.log('恢复购买成功，准备返回')
-    onVibrate()
-    // 恢复成功，返回上一页
-    setTimeout(() => {
-      uni.navigateBack()
-    }, 500)
-  } else {
-    console.log('恢复购买失败:', result.message)
+    if (result.success) {
+      console.log('恢复购买成功，准备返回')
+      onVibrate()
+      // 恢复成功，返回上一页
+      setTimeout(() => {
+        uni.navigateBack()
+      }, 500)
+    } else {
+      console.log('恢复购买失败:', result.message)
+    }
+  } finally {
+    uni.hideLoading()
   }
 }
 </script>
@@ -461,6 +468,11 @@ async function handleRestore() {
 
   &:active {
     opacity: 0.6;
+  }
+
+  &.disabled {
+    opacity: 0.4;
+    pointer-events: none;
   }
 }
 
