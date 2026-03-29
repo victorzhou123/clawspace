@@ -13,7 +13,7 @@
             "default" : {
                 "launchtype" : "local"
             },
-            "provider" : "aliyun",
+            "provider" : "alipay",
             "type" : "uniCloud"
         }
     ]
