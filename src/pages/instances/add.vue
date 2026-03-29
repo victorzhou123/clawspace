@@ -32,12 +32,21 @@
 
         <view class="form-item">
           <text class="label">API Token</text>
-          <input
-            v-model="form.token"
-            class="input"
-            placeholder="输入 Token"
-            :maxlength="512"
-          />
+          <view class="input-wrapper">
+            <input
+              v-model="form.token"
+              :type="showToken ? 'text' : 'password'"
+              class="input"
+              placeholder="输入 Token"
+              :maxlength="512"
+            />
+            <image
+              class="eye-icon"
+              :src="showToken ? (theme === 'dark' ? '/static/icon/eye-fill-light.svg' : '/static/icon/eye-fill-dark.svg') : (theme === 'dark' ? '/static/icon/eye-close-fill-light.svg' : '/static/icon/eye-close-fill-dark.svg')"
+              mode="aspectFit"
+              @tap="() => { onVibrate(); showToken = !showToken; }"
+            />
+          </view>
         </view>
 
         <view class="btn-group">
@@ -71,6 +80,7 @@ const { themeClass, theme } = useTheme()
 
 const loading = ref(false)
 const errorMsg = ref('')
+const showToken = ref(false)
 
 const form = reactive({
   name: '',
@@ -240,14 +250,30 @@ function handleCancel() {
     font-weight: 500;
   }
 
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
   .input {
     height: 88rpx;
     border: 1rpx solid var(--border-color);
     border-radius: 12rpx;
     padding: 0 24rpx;
+    padding-right: 80rpx;
     font-size: 28rpx;
     background: var(--bg-card);
     color: var(--text-primary);
+    flex: 1;
+  }
+
+  .eye-icon {
+    position: absolute;
+    right: 24rpx;
+    width: 40rpx;
+    height: 40rpx;
+    opacity: 0.6;
   }
 }
 
@@ -279,11 +305,16 @@ function handleCancel() {
 .btn-action {
   flex: 1;
   height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   background: var(--bg-card);
   color: var(--text-primary);
   border-radius: 12rpx;
   font-size: 28rpx;
   font-weight: 500;
+  text-align: center;
   border: 1rpx solid var(--border-color);
 
   &:active {
@@ -294,15 +325,17 @@ function handleCancel() {
     opacity: 0.6;
   }
 
-  &:first-child {
-    background: var(--primary);
+  &:first-child,
+  &:nth-child(2) {
+    background: var(--bg-tertiary);
     color: #fff;
     border: none;
   }
 
   &.btn-cancel {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
+    background: rgba(255, 77, 79, 0.12);
+    color: var(--danger);
+    border: 1rpx solid rgba(255, 77, 79, 0.24);
   }
 }
 

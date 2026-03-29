@@ -50,12 +50,14 @@ export const useInstanceStore = defineStore('instance', () => {
   }
 
   function deleteInstance(id: string): boolean {
-    if (id === currentInstanceId.value) {
-      logger.warn(TAG, 'cannot delete current instance')
-      return false
-    }
     const index = instances.value.findIndex(i => i.id === id)
     if (index === -1) return false
+
+    // 如果删除的是当前实例，清空当前实例 ID
+    if (id === currentInstanceId.value) {
+      currentInstanceId.value = null
+    }
+
     instances.value.splice(index, 1)
     saveInstances()
     logger.info(TAG, 'instance deleted', id)

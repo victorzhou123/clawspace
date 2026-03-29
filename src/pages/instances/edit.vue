@@ -5,7 +5,9 @@
         <image class="nav-back-icon" :src="theme === 'dark' ? '/static/icon/back-light.svg' : '/static/icon/back-dark.svg'" mode="aspectFit" />
       </view>
       <text class="nav-title">编辑实例</text>
-      <view style="width: 60rpx;" />
+      <view class="nav-delete" @tap="handleDelete">
+        <image class="delete-icon" src="/static/icon/delete.svg" mode="aspectFit" />
+      </view>
     </view>
 
     <view class="content">
@@ -32,12 +34,21 @@
 
         <view class="form-item">
           <text class="label">API Token</text>
-          <input
-            v-model="form.token"
-            class="input"
-            placeholder="输入 Token"
-            :maxlength="512"
-          />
+          <view class="input-wrapper">
+            <input
+              v-model="form.token"
+              :type="showToken ? 'text' : 'password'"
+              class="input"
+              placeholder="输入 Token"
+              :maxlength="512"
+            />
+            <image
+              class="eye-icon"
+              :src="showToken ? (theme === 'dark' ? '/static/icon/eye-fill-light.svg' : '/static/icon/eye-fill-dark.svg') : (theme === 'dark' ? '/static/icon/eye-close-fill-light.svg' : '/static/icon/eye-close-fill-dark.svg')"
+              mode="aspectFit"
+              @tap="() => { onVibrate(); showToken = !showToken; }"
+            />
+          </view>
         </view>
 
         <view class="btn-group">
@@ -71,6 +82,7 @@ const { themeClass, theme } = useTheme()
 
 const loading = ref(false)
 const errorMsg = ref('')
+const showToken = ref(false)
 let instanceId = ''
 
 const form = reactive({
@@ -217,6 +229,34 @@ function handleCancel() {
     uni.navigateBack()
   }
 }
+
+function handleDelete() {
+  onVibrate()
+  const isCurrentInstance = instanceId === instanceStore.currentInstanceId
+
+  uni.showModal({
+    title: '确认删除？',
+    content: isCurrentInstance ? '删除后将退出登录' : '',
+    confirmColor: '#FF4D4F',
+    success: (res) => {
+      if (res.confirm) {
+        const success = instanceStore.deleteInstance(instanceId)
+        if (success) {
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          setTimeout(() => {
+            if (isCurrentInstance) {
+              uni.reLaunch({ url: '/pages/auth/login' })
+            } else {
+              uni.navigateBack()
+            }
+          }, 500)
+        } else {
+          uni.showToast({ title: '删除失败', icon: 'none' })
+        }
+      }
+    }
+  })
+}
 </script>
 
 <style scoped lang="scss">
@@ -251,6 +291,20 @@ function handleCancel() {
     font-weight: 500;
     color: var(--nav-text);
   }
+
+  .nav-delete {
+    width: 60rpx;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    .delete-icon {
+      width: 44rpx;
+      height: 44rpx;
+      margin-right: 10rpx;
+      filter: brightness(0) saturate(100%) invert(25%) sepia(80%) saturate(2500%) hue-rotate(345deg) brightness(90%) contrast(95%);
+    }
+  }
 }
 
 .content {
@@ -275,14 +329,30 @@ function handleCancel() {
     font-weight: 500;
   }
 
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
   .input {
     height: 88rpx;
     border: 1rpx solid var(--border-color);
     border-radius: 12rpx;
     padding: 0 24rpx;
+    padding-right: 80rpx;
     font-size: 28rpx;
     background: var(--bg-card);
     color: var(--text-primary);
+    flex: 1;
+  }
+
+  .eye-icon {
+    position: absolute;
+    right: 24rpx;
+    width: 40rpx;
+    height: 40rpx;
+    opacity: 0.6;
   }
 }
 
