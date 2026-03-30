@@ -1,5 +1,5 @@
 <template>
-  <view class="paywall-page" :class="{ dark: isDark }">
+  <view class="paywall-page" :class="[themeClass, { dark: isDark }]">
     <!-- 返回按钮（浮动） -->
     <view class="back-button" @click="handleClose">
       <text class="icon-close">✕</text>
@@ -40,7 +40,7 @@
           <view class="price-glow"></view>
           <text class="price-label">一次性付费</text>
           <view class="price-amount">
-            <text class="price-value">¥ {{ productPrice }}</text>
+            <text class="price-value">{{ currencySymbol }} {{ productPrice }}</text>
           </view>
           <text class="price-desc">一次付费，永久拥有高级体验</text>
         </view>
@@ -78,10 +78,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { usePaywallStore } from '@/stores/paywall'
 import { useThemeStore } from '@/stores/theme'
+import { useTheme } from '@/composables/useTheme'
 import { onVibrate } from '@/utils/haptic'
 
 const paywallStore = usePaywallStore()
 const themeStore = useThemeStore()
+const { themeClass } = useTheme()
 
 const isDark = computed(() => themeStore.theme === 'dark')
 const isPurchasing = computed(() => paywallStore.isPurchasing)
@@ -90,18 +92,46 @@ const isPremium = computed(() => paywallStore.isPremium)
 
 // 产品价格
 const productPrice = ref('8')
+const currencySymbol = ref('¥')
+
+const currencySymbolMap: Record<string, string> = {
+  CNY: '¥',
+  USD: '$',
+  EUR: '€',
+  GBP: '£',
+  JPY: '¥',
+  HKD: 'HK$',
+  TWD: 'NT$',
+  SGD: 'S$',
+  AUD: 'A$',
+  CAD: 'C$',
+}
+
+function parseCurrencyFromPriceLocal(priceLocal?: string): string | null {
+  if (!priceLocal) return null
+  const match = priceLocal.match(/currency=([A-Z]{3})/i)
+  return match ? match[1].toUpperCase() : null
+}
+
+function resolveCurrencySymbol(priceLocal?: string): string {
+  const code = parseCurrencyFromPriceLocal(priceLocal)
+  if (!code) return '¥'
+  return currencySymbolMap[code] ?? code
+}
 
 // 获取产品信息
 onMounted(async () => {
   try {
     const product = await paywallStore.getProductInfo()
     if (product && product.price) {
-      productPrice.value = product.price
+      productPrice.value = String(product.price)
     }
+    currencySymbol.value = resolveCurrencySymbol(product?.pricelocal)
   } catch (error) {
     console.error('获取产品信息失败', error)
     // 使用默认价格
     productPrice.value = '8'
+    currencySymbol.value = '¥'
   }
 })
 
@@ -158,7 +188,6 @@ async function handleRestore() {
 <style lang="scss" scoped>
 .paywall-page {
   width: 100%;
-  margin-top: env(safe-area-inset-top);
   height: 100vh;
   background: #f9f9ff;
   position: fixed;
@@ -215,6 +244,7 @@ async function handleRestore() {
 // 主内容区（全屏滚动）
 .main-content {
   flex: 1;
+  margin-top: env(safe-area-inset-top);
   padding: 0 40rpx;
   height: 100%;
   box-sizing: border-box;
