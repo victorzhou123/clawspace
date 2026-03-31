@@ -85,7 +85,7 @@ export const usePaywallStore = defineStore('paywall', () => {
         }, async (result: any) => {
           console.log('购买成功', result)
 
-          const receipt = result.receipt || ''
+          const receipt = result.transactionReceipt || ''
           const txId = result.transactionIdentifier || ''
 
           // 调用云函数验证收据
@@ -195,6 +195,14 @@ export const usePaywallStore = defineStore('paywall', () => {
           console.log('恢复购买成功，结果:', results)
           console.log('结果类型:', typeof results, '是否为数组:', Array.isArray(results))
           console.log('结果长度:', results?.length)
+
+          if (!Array.isArray(results) || results.length === 0) {
+            console.log('恢复购买结果为空，终止后续处理')
+            isRestoring.value = false
+            if (!silent) uni.showToast({ title: '未找到购买记录', icon: 'none' })
+            resolve({ success: false, message: '未找到购买记录' })
+            return
+          }
 
           // 定义交易对象结构
           interface IAPTransaction {
