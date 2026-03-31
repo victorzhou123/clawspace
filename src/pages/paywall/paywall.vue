@@ -50,8 +50,9 @@
       <view class="footer">
         <view class="footer-links">
           <text class="footer-link" :class="{ disabled: isRestoring }" @click="handleRestore">恢复购买</text>
-          <text class="footer-link">服务条款</text>
-          <text class="footer-link">隐私政策</text>
+          <text class="footer-link" @click="openExternal('https://docs.vic0.com/docs/clawspace/service-terms-zh')">服务条款</text>
+          <text class="footer-link" @click="openExternal('https://docs.vic0.com/docs/clawspace/privacy-zh')">隐私政策</text>
+          <text class="footer-link" @click="openExternal('https://docs.vic0.com/docs/clawspace/support-zh')">技术支持</text>
         </view>
         <text class="footer-copyright">© 2026 Clawspace</text>
       </view>
@@ -134,6 +135,29 @@ onMounted(async () => {
     currencySymbol.value = '¥'
   }
 })
+
+// 打开外部链接
+function openExternal(url: string) {
+  onVibrate()
+  // #ifdef H5
+  window.open(url)
+  // #endif
+
+  // #ifdef APP-PLUS
+  plus.runtime.openURL(url)
+  // #endif
+
+  // #ifndef H5
+  // #ifndef APP-PLUS
+  uni.setClipboardData({
+    data: url,
+    success: () => {
+      uni.showToast({ title: '链接已复制', icon: 'none' })
+    },
+  })
+  // #endif
+  // #endif
+}
 
 // 关闭付费墙
 function handleClose() {
