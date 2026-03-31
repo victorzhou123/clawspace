@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const TABLE_NAME = 'purchases';
 const ENCRYPTION_KEY = Buffer.from('clawspace-test-key-32bytes!@#$12'); // 32字节
 const ENCRYPTION_IV = Buffer.from('clawspace-test12'); // 16字节
-const IS_SANDBOX = false;
+const IS_SANDBOX = true;
 
 // Apple 验证 API
 const PRODUCTION_URL = 'https://buy.itunes.apple.com/verifyReceipt';
