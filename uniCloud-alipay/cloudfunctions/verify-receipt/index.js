@@ -1,20 +1,16 @@
 'use strict';
 
 const crypto = require('crypto');
-const createConfig = require('uni-config-center');
-const purchaseConfig = createConfig({ pluginId: 'clawspace-purchase-config' });
-const config = purchaseConfig.config();
-const ENV = config.env || 'test';
-const CURRENT_CONFIG = config[ENV] || {};
-const TABLE_NAME = CURRENT_CONFIG.tableName || 'purchases_test';
-const ENCRYPTION_KEY = Buffer.from(CURRENT_CONFIG.encryptionKey || 'clawspace-test-key-32bytes!@#123');
-const ENCRYPTION_IV = Buffer.from(CURRENT_CONFIG.encryptionIV || 'clawspace-test12');
+const TABLE_NAME = 'purchases';
+const ENCRYPTION_KEY = Buffer.from('clawspace-test-key-32bytes!@#$12'); // 32字节
+const ENCRYPTION_IV = Buffer.from('clawspace-test12'); // 16字节
+const IS_SANDBOX = false;
 
 // Apple 验证 API
 const PRODUCTION_URL = 'https://buy.itunes.apple.com/verifyReceipt';
 const SANDBOX_URL = 'https://sandbox.itunes.apple.com/verifyReceipt';
 
-console.log(`[verify-receipt] 当前环境: ${ENV}, 表名: ${TABLE_NAME}`);
+console.log(`[verify-receipt] 表名: ${TABLE_NAME}`);
 
 /**
  * 加密收据
@@ -61,9 +57,8 @@ exports.main = async (event, context) => {
   }
 
   try {
-    // 1. 根据 ENV 直接选择验证环境
-    const isSandbox = ENV === 'test';
-    let verifyResult = await verifyWithApple(receipt, isSandbox);
+    // 1. 根据配置选择验证环境
+    let verifyResult = await verifyWithApple(receipt, IS_SANDBOX);
 
     // 3. 验证失败
     if (verifyResult.status !== 0) {

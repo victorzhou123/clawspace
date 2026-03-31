@@ -1,13 +1,8 @@
 'use strict';
 
-const createConfig = require('uni-config-center');
-const purchaseConfig = createConfig({ pluginId: 'clawspace-purchase-config' });
-const config = purchaseConfig.config();
-const ENV = config.env || 'test';
-const CURRENT_CONFIG = config[ENV] || {};
-const TABLE_NAME = CURRENT_CONFIG.tableName || 'purchases_test';
+const TABLE_NAME = 'purchases';
 
-console.log(`[check-purchase-status] 当前环境: ${ENV}, 表名: ${TABLE_NAME}`);
+console.log(`[check-purchase-status] 表名: ${TABLE_NAME}`);
 
 exports.main = async (event, context) => {
   const { transactionId } = event;
