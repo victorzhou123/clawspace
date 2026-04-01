@@ -70,7 +70,6 @@ export const useUserStore = defineStore('user', () => {
     const saved = storage.get<string>('auth_token')
     const url = storage.get<string>('instance_url')
     if (!saved || !url) {
-      uni.reLaunch({ url: '/pages/auth/login' })
       return false
     }
     try {

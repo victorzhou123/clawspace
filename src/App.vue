@@ -3,7 +3,6 @@ import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
 import { useUserStore } from "@/stores/user";
 import { useInstanceStore } from "@/stores/instance";
 import { usePaywallStore } from "@/stores/paywall";
-import { WHITE_LIST } from "@/utils/guard";
 import { wsManager } from "@/utils/websocket-manager";
 import { logger } from "@/utils/logger";
 import { waitForNetwork } from "@/utils/network";
@@ -19,12 +18,13 @@ onLaunch(async () => {
   // 迁移旧的登录数据到实例管理系统
   instanceStore.initFromLegacyStorage();
 
-  const checkAuth = (options: { url: string }) => {
-    const path = options.url.split("?")[0];
-    if (WHITE_LIST.includes(path)) return true;
-    if (userStore.isAuthenticated) return true;
+  // 如果本地没有任何实例，则将登录页作为首个页面
+  if (instanceStore.instances.length === 0) {
     uni.reLaunch({ url: "/pages/auth/login" });
-    return false;
+  }
+
+  const checkAuth = (_options: { url: string }) => {
+    return true;
   };
   uni.addInterceptor("navigateTo", { invoke: checkAuth });
   uni.addInterceptor("redirectTo", { invoke: checkAuth });
