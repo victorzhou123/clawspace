@@ -1,6 +1,11 @@
 'use strict';
 
-const TABLE_NAME = 'purchases';
+const createConfig = require('uni-config-center');
+
+const config = createConfig({ pluginId: 'clawspace' }).config({
+  TABLE_NAME: 'purchases'
+});
+const { TABLE_NAME } = config;
 
 console.log(`[check-purchase-status] 表名: ${TABLE_NAME}`);
 

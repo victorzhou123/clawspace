@@ -1,0 +1,6 @@
+{
+  "ENV": "test",
+  "ENCRYPTION_KEY": "clawspace-test-key-32bytes!@#$12",
+  "ENCRYPTION_IV": "clawspace-test12",
+  "TABLE_NAME": "purchases"
+}

@@ -1,10 +1,16 @@
 'use strict';
 
 const crypto = require('crypto');
-const TABLE_NAME = 'purchases';
-const ENCRYPTION_KEY = Buffer.from('clawspace-test-key-32bytes!@#$12'); // 32字节
-const ENCRYPTION_IV = Buffer.from('clawspace-test12'); // 16字节
-const IS_SANDBOX = false;
+const createConfig = require('uni-config-center');
+
+const config = createConfig({ pluginId: 'clawspace' }).config({
+  ENV: 'test',
+  ENCRYPTION_KEY: 'clawspace-test-key-32bytes!@#$12',
+  ENCRYPTION_IV: 'clawspace-test12',
+  TABLE_NAME: 'purchases'
+});
+const { ENV, ENCRYPTION_KEY, ENCRYPTION_IV, TABLE_NAME } = config;
+const IS_SANDBOX = ENV !== 'production';
 
 // Apple 验证 API
 const PRODUCTION_URL = 'https://buy.itunes.apple.com/verifyReceipt';
