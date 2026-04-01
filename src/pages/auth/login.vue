@@ -52,6 +52,11 @@
         </view>
       </view>
     </view>
+
+    <view class="skip-login" @tap="handleSkipLogin">
+      <text class="skip-text">跳过登录</text>
+      <image class="skip-icon" :src="theme === 'dark' ? '/static/icon/right-light.svg' : '/static/icon/right-dark.svg'" mode="aspectFit" />
+    </view>
   </view>
 </template>
 
@@ -120,6 +125,15 @@ async function handleLogin() {
         : '连接失败，请检查地址和 Token'
   } finally {
     loading.value = false
+  }
+}
+
+function handleSkipLogin() {
+  onVibrate()
+  if (redirectUrl) {
+    uni.navigateTo({ url: redirectUrl })
+  } else {
+    uni.reLaunch({ url: '/pages/chat/chat' })
   }
 }
 
@@ -317,6 +331,28 @@ function handleCopy() {
   font-size: 24rpx;
   color: var(--text-secondary);
   margin-bottom: 16rpx;
+}
+
+.skip-login {
+  margin-top: 74rpx;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  padding: 8rpx 12rpx;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+.skip-text {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+
+.skip-icon {
+  width: 28rpx;
+  height: 28rpx;
 }
 
 .copy-area {
